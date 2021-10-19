@@ -1,0 +1,42 @@
+{
+  "name": "FL Masquerade",
+  "description": "Manage multiple identities in \"Fallen London\"",
+  "version": "1.0.0",
+  "manifest_version": 2,
+  "background": {
+    "scripts": [
+      "background.js"
+    ],
+    "persistent": true
+  },
+  "permissions": [
+    "tabs",
+    "storage"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://www.fallenlondon.com/*"],
+      "js": ["content.js"],
+      "css": [],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    "inject.js"
+  ],
+  "browser_action": {
+    "default_icon": {
+      "16": "/images/mask-icon-16.png",
+      "32": "/images/mask-icon-32.png",
+      "48": "/images/mask-icon-48.png",
+      "128": "/images/mask-icon-128.png"
+    },
+    "default_title": "FL Masquerade"
+  },
+  "icons": {
+    "16": "/images/mask-icon-16.png",
+    "32": "/images/mask-icon-32.png",
+    "48": "/images/mask-icon-48.png",
+    "128": "/images/mask-icon-128.png"
+  }
+}
