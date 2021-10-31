@@ -197,7 +197,7 @@ while the extension was active.</strong>
         }
 
         if (event.data.action === "FL_MQ_listProfiles") {
-            activeProfiles = event.data.profiles;
+            activeProfiles = new Map(event.data.profiles);
         }
     });
 

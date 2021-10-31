@@ -15,46 +15,18 @@ function sendToPage(action, detail) {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.action === "FL_MQ_switchTo") {
-        sendToPage(
-            "FL_MQ_switchTo",
-            {
-                accessToken: message.accessToken
-            }
-        )
-    }
-})
+    if (!message.action) return;
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.action === "FL_MQ_listProfiles") {
-        sendToPage(
-            "FL_MQ_listProfiles",
-            {
-                profiles: new Map(message.profiles),
-            }
-        )
-    }
-})
+    if (!message.action.startsWith("FL_MQ_")) return;
 
-
-window.addEventListener("FL_MQ_LoggedIn", (event) => {
-    chrome.runtime.sendMessage({
-        action: "FL_MQ_LoggedIn",
-        userId: event.detail.userId,
-        username: event.detail.username,
-        token: event.detail.token
-    });
+    sendToPage(message.action, message);
 });
 
-window.addEventListener("FL_MQ_switchTo", (event) => {
-    chrome.runtime.sendMessage({
-        action: "FL_MQ_switchTo",
-        userId: event.detail.userId,
-    });
-});
-
-window.addEventListener("FL_MQ_listProfiles", () => {
-    chrome.runtime.sendMessage({
-        action: "FL_MQ_listProfiles",
+["FL_MQ_LoggedIn", "FL_MQ_switchTo", "FL_MQ_listProfiles"].forEach((eventType) => {
+    window.addEventListener(eventType, (event) => {
+        chrome.runtime.sendMessage({
+            action: eventType,
+            ...event.detail,
+        })
     });
 });
