@@ -1,12 +1,29 @@
 (function () {
     const DONE = 4;
+    const PERSONA_CHANGE_STORYLET_ID = 777_777_777;
+    const CHOICE_STORYLET_DESCRIPTION = `
+<strong>Here you can switch to one of your other accounts, provided that you logged into them at least once
+while the extension was active.</strong>
+`;
 
     console.log("[FL Masquerade] Starting injected script.");
 
+    let activeProfiles = new Map();
+
     function reportLogin(userId, username, token) {
-        let event = new CustomEvent("FL_MQ_LoggedIn", {
+        const event = new CustomEvent("FL_MQ_LoggedIn", {
             detail: {userId: userId, username: username, token: token}
         })
+        window.dispatchEvent(event);
+    }
+
+    function requestProfileList() {
+        const event = new CustomEvent("FL_MQ_listProfiles", {})
+        window.dispatchEvent(event);
+    }
+
+    function switchToUser(userId) {
+        const event = new CustomEvent("FL_MQ_switchTo", {detail: {userId: userId}})
         window.dispatchEvent(event);
     }
 
@@ -18,17 +35,136 @@
         };
     }
 
+    function setFakeXhrResponse(request, status, responseText) {
+        Object.defineProperty(request, 'responseText', {writable: true});
+        Object.defineProperty(request, 'readyState', {writable: true});
+        Object.defineProperty(request, 'status', {writable: true});
+
+        request.responseText = JSON.stringify(createChoiceStorylet([]));
+        request.readyState = DONE;
+        request.status = 200;
+
+        request.onreadystatechange();
+    }
+
     function sendBypass(original_function) {
         return function (body) {
             if (this._targetUrl.endsWith("/logout")) {
-                this.status = 200;
-                this.responseText = '{"isSuccess": true}';
-                this.readyState = DONE;
+                setFakeXhrResponse(this, 200, '{"isSuccess": true}');
                 return this;
+            }
+
+            if (this._targetUrl.endsWith("/begin")) {
+                const requestData = JSON.parse(arguments[0]);
+                if (requestData.eventId === PERSONA_CHANGE_STORYLET_ID) {
+                    setFakeXhrResponse(this, 200, JSON.stringify(createChoiceStorylet([])));
+                    return this;
+                }
+            }
+
+            if (this._targetUrl.endsWith("/choosebranch")) {
+                const requestData = JSON.parse(arguments[0]);
+                if (requestData.branchId > PERSONA_CHANGE_STORYLET_ID) {
+                    const response = {
+                        actions: 0,
+                        canChangeOutfit: true,
+                        endStorylet: {
+                            rootEventId: PERSONA_CHANGE_STORYLET_ID,
+                            premiumBenefitsApply: true,
+                            maxActionsAllowed: 20,
+                            isLinkingEvent: false,
+                            event: {
+                                isInEventUseTree: false,
+                                image: "maskrose",
+                                id: PERSONA_CHANGE_STORYLET_ID + 1,
+                                frequency: "Always",
+                                description: "And now, you wait.",
+                                name: "Why We Wear Faces",
+                            },
+                            image: "masktanned",
+                            isDirectLinkingEvent: true,
+                            canGoAgain: false,
+                            currentActionsRemaining: 20,
+                        },
+                        isSuccess: true,
+                        messages: [],
+                        phase: "End",
+                    };
+
+                    setFakeXhrResponse(this, 200, JSON.stringify(response));
+
+                    const requestedUserId = requestData.branchId - PERSONA_CHANGE_STORYLET_ID;
+                    console.log(`Switching to ${requestedUserId}...`);
+                    switchToUser(requestedUserId);
+
+                    return this;
+                }
             }
 
             return original_function.apply(this, arguments);
         };
+    }
+
+    function capitalize(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+
+    function createStoryletPlaceholder() {
+        return {
+            category: "Fancy",
+            name: "Become Someone Completely Different",
+            id: PERSONA_CHANGE_STORYLET_ID,
+            image: "maskrose",
+            qualityRequirements: [],
+            teaser: "Why do we wear faces, again?"
+        }
+    }
+
+    function createChoiceStorylet(profiles) {
+        const profileBranches = [];
+
+        for (let k of activeProfiles.keys()) {
+            const profile = activeProfiles.get(k);
+
+            profileBranches.push({
+                name: `Become "${profile.username}"`,
+                description: capitalize("a midnight, sinister, inescapable and sagacious gentleman."),
+                actionCost: 0,
+                actionLocked: false,
+                challenges: [],
+                currencyCost: 0,
+                currencyLocked: false,
+                id: PERSONA_CHANGE_STORYLET_ID + k,
+                image: "../cameos/dorian",
+                isLocked: false,
+                ordering: 0,
+                planKey: "1234567890abcdefghijklmnopqrstuv",
+                qualityLocked: false,
+                qualityRequirements: [],
+            });
+        }
+
+        return {
+            actions: 0,
+            canChangeOutfit: true,
+            isSuccess: true,
+            phase: "In",
+            storylet: {
+                childBranches: profileBranches,
+                description: CHOICE_STORYLET_DESCRIPTION,
+                distribution: 0,
+                frequency: "Always",
+                id: PERSONA_CHANGE_STORYLET_ID,
+                image: "maskrose",
+                isInEventUseTree: false,
+                isLocked: false,
+                canGoBack: true,
+                name: "Become Someone Completely Different",
+                qualityRequirements: [],
+                teaser: "Why do we wear faces, again?",
+                urgency: "Normal",
+            },
+        }
     }
 
     function parseResponse(response) {
@@ -38,9 +174,19 @@
 
         let targetUrl = response.currentTarget.responseURL;
         if (targetUrl.endsWith("/api/login")) {
-            let data = JSON.parse(response.target.responseText);
+            const data = JSON.parse(response.target.responseText);
 
             reportLogin(data.user.id, data.user.name, data.jwt);
+        }
+
+        if (targetUrl.endsWith("/api/storylet") || targetUrl.endsWith("/api/storylet/goback")) {
+            const data = JSON.parse(response.target.responseText);
+            if (data.phase === "Available") {
+                data.storylets.push(createStoryletPlaceholder())
+
+                Object.defineProperty(this, 'responseText', {writable: true});
+                this.responseText = JSON.stringify(data);
+            }
         }
     }
 
@@ -49,10 +195,15 @@
             localStorage.access_token = event.data.accessToken;
             location.reload(true);
         }
+
+        if (event.data.action === "FL_MQ_listProfiles") {
+            activeProfiles = event.data.profiles;
+        }
     });
 
     console.debug("[FL Masquerade] Setting up API interceptors.");
     XMLHttpRequest.prototype.open = openBypass(XMLHttpRequest.prototype.open);
     XMLHttpRequest.prototype.send = sendBypass(XMLHttpRequest.prototype.send);
-    //XMLHttpRequest.prototype.setRequestHeader = installAuthSniffer(XMLHttpRequest.prototype.setRequestHeader);
+
+    requestProfileList();
 }())
