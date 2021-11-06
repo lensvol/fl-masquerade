@@ -9,10 +9,18 @@ while the extension was active.</strong>
     console.log("[FL Masquerade] Starting injected script.");
 
     let activeProfiles = new Map();
+    let currentUserId = -1;
 
     function reportLogin(userId, username, token) {
         const event = new CustomEvent("FL_MQ_LoggedIn", {
             detail: {userId: userId, username: username, token: token}
+        })
+        window.dispatchEvent(event);
+    }
+
+    function reportAdditionalInfo(userId, name, description, avatar) {
+        const event = new CustomEvent("FL_MQ_augmentInfo", {
+            detail: {userId: userId, name: name, description: description, avatar: avatar}
         })
         window.dispatchEvent(event);
     }
@@ -124,18 +132,24 @@ while the extension was active.</strong>
         const profileBranches = [];
 
         for (let k of activeProfiles.keys()) {
+            if (k === currentUserId) {
+                continue;
+            }
+
             const profile = activeProfiles.get(k);
 
+            const description = (profile.description || "").replace(/(<([^>]+)>)/gi, "");
+
             profileBranches.push({
-                name: `Become "${profile.username}"`,
-                description: capitalize("a midnight, sinister, inescapable and sagacious gentleman."),
+                name: profile.name || profile.username,
+                description: capitalize(description) + ".",
                 actionCost: 0,
                 actionLocked: false,
                 challenges: [],
                 currencyCost: 0,
                 currencyLocked: false,
                 id: PERSONA_CHANGE_STORYLET_ID + k,
-                image: "../cameos/dorian",
+                image: `../cameos/${profile.avatar || "dorian"}`,
                 isLocked: false,
                 ordering: 0,
                 planKey: "1234567890abcdefghijklmnopqrstuv",
@@ -179,6 +193,15 @@ while the extension was active.</strong>
             reportLogin(data.user.id, data.user.name, data.jwt);
         }
 
+        if (targetUrl.endsWith("/api/character/myself")) {
+            const data = JSON.parse(response.target.responseText);
+            const ch = data.character;
+
+            currentUserId = ch.user.id;
+
+            reportAdditionalInfo(ch.user.id, ch.name, ch.descriptiveText, ch.avatarImage);
+        }
+
         if (targetUrl.endsWith("/api/storylet") || targetUrl.endsWith("/api/storylet/goback")) {
             const data = JSON.parse(response.target.responseText);
             if (data.phase === "Available") {
@@ -191,19 +214,21 @@ while the extension was active.</strong>
     }
 
     window.addEventListener("message", (event) => {
-        if(event.data.action === "FL_MQ_switchTo") {
+        if (event.data.action === "FL_MQ_switchTo") {
             localStorage.access_token = event.data.accessToken;
             location.reload(true);
         }
 
         if (event.data.action === "FL_MQ_listProfiles") {
-            activeProfiles = new Map(event.data.profiles);
+            activeProfiles = new Map(event.data.profiles);;
         }
     });
 
     console.debug("[FL Masquerade] Setting up API interceptors.");
     XMLHttpRequest.prototype.open = openBypass(XMLHttpRequest.prototype.open);
     XMLHttpRequest.prototype.send = sendBypass(XMLHttpRequest.prototype.send);
+
+    currentToken = localStorage.access_token || sessionStorage.access_token;
 
     requestProfileList();
 }())

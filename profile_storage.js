@@ -34,8 +34,18 @@ class ProfileStorage {
         };
 
         this.profiles.set(userId, userRecord[`profile_${userId}`]);
-        
-        chrome.storage.local.set(userRecord, () => console.debug(`Saved token for ${username} (${userId})`));
+        chrome.storage.local.set(userRecord, () => console.debug(`Added user ${username} (${userId})`));
+    }
+
+    augmentProfile(userId, information) {
+        const userRecord = {};
+        userRecord[`profile_${userId}`] = {
+            ...this.getProfile(userId),
+            ...information,
+        };
+
+        this.profiles.set(userId, userRecord[`profile_${userId}`]);
+        chrome.storage.local.set(userRecord, () => console.debug(`Augmented user ${userId} with"`, information));
     }
 
     listProfiles() {
