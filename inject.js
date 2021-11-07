@@ -72,6 +72,12 @@ while the extension was active.</strong>
 
             if (this._targetUrl.endsWith("/choosebranch")) {
                 const requestData = JSON.parse(arguments[0]);
+                if (requestData.branchId === PERSONA_CHANGE_STORYLET_ID) {
+                    setFakeXhrResponse(this, 200, JSON.stringify(createChoiceStorylet()));
+
+                    return this;
+                }
+
                 if (requestData.branchId > PERSONA_CHANGE_STORYLET_ID) {
                     const response = {
                         actions: 0,
@@ -120,11 +126,32 @@ while the extension was active.</strong>
     function createStoryletPlaceholder() {
         return {
             category: "Fancy",
+            buttonText: "Do it",
             name: "Become Someone Completely Different",
             id: PERSONA_CHANGE_STORYLET_ID,
             image: "maskrose",
             qualityRequirements: [],
             teaser: "Why do we wear faces, again?"
+        }
+    }
+
+    function createBranchPlaceholder() {
+        return {
+            name: "Become Someone Completely Different",
+            description: "Why do we wear faces, again?",
+            actionCost: 0,
+            actionLocked: false,
+            challenges: [],
+            currencyCost: 0,
+            currencyLocked: false,
+            id: PERSONA_CHANGE_STORYLET_ID,
+            image: "maskrose",
+            isLocked: false,
+            ordering: 0,
+            buttonText: "Do it",
+            planKey: "1234567890abcdefghijklmnopqrstuv",
+            qualityLocked: false,
+            qualityRequirements: [],
         }
     }
 
@@ -152,6 +179,7 @@ while the extension was active.</strong>
                 image: `../cameos/${profile.avatar || "dorian"}`,
                 isLocked: false,
                 ordering: 0,
+                buttonText: "Choose",
                 planKey: "1234567890abcdefghijklmnopqrstuv",
                 qualityLocked: false,
                 qualityRequirements: [],
@@ -207,6 +235,12 @@ while the extension was active.</strong>
             if (data.phase === "Available") {
                 data.storylets.push(createStoryletPlaceholder())
 
+                Object.defineProperty(this, 'responseText', {writable: true});
+                this.responseText = JSON.stringify(data);
+            }
+
+            if (data.phase === "In" && !data.storylet.canGoBack) {
+                data.storylet.childBranches.push(createBranchPlaceholder());
                 Object.defineProperty(this, 'responseText', {writable: true});
                 this.responseText = JSON.stringify(data);
             }
