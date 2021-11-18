@@ -45,7 +45,7 @@ class ProfileStorage {
         };
 
         this.profiles.set(userId, userRecord[`profile_${userId}`]);
-        chrome.storage.local.set(userRecord, () => console.debug(`Augmented user ${userId} with"`, information));
+        chrome.storage.local.set(userRecord, () => console.debug(`Augmented user ${userId} with `, information));
     }
 
     listProfiles() {

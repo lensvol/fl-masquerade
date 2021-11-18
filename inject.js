@@ -25,6 +25,13 @@ while the extension was active.</strong>
         window.dispatchEvent(event);
     }
 
+    function reportUpdatedToken(userId, newToken) {
+        const event = new CustomEvent("FL_MQ_augmentInfo", {
+            detail: {userId: userId, token: newToken}
+        })
+        window.dispatchEvent(event);
+    }
+
     function requestProfileList() {
         const event = new CustomEvent("FL_MQ_listProfiles", {})
         window.dispatchEvent(event);
@@ -219,6 +226,16 @@ while the extension was active.</strong>
             const data = JSON.parse(response.target.responseText);
 
             reportLogin(data.user.id, data.user.name, data.jwt);
+        }
+
+        if (targetUrl.endsWith("/api/login/user")) {
+            const data = JSON.parse(response.target.responseText);
+            debugger;
+            if (data.jwt !== currentToken) {
+                console.log(`[FL Masquerade] Token has been updated for user ${data.user.id}`);
+                currentToken = data.jwt;
+                reportUpdatedToken(data.user.id, data.jwt);
+            }
         }
 
         if (targetUrl.endsWith("/api/character/myself")) {

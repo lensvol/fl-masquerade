@@ -11,6 +11,12 @@ function reportProfilesList(tabId) {
     });
 }
 
+function getFallenLondonTabs() {
+    return new Promise((resolve, reject) => {
+
+    });
+}
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log(request);
     if (request.action === "FL_MQ_LoggedIn") {
@@ -19,11 +25,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
     if (request.action === "FL_MQ_augmentInfo") {
-        profileStorage.augmentProfile(request.userId, {
-            name: request.name,
-            avatar: request.avatar,
-            description: request.description,
-        });
+        profileStorage.augmentProfile(request.userId, request);
         reportProfilesList(sender.tab.id);
     }
 
