@@ -230,7 +230,6 @@ while the extension was active.</strong>
 
         if (targetUrl.endsWith("/api/login/user")) {
             const data = JSON.parse(response.target.responseText);
-            debugger;
             if (data.jwt !== currentToken) {
                 console.log(`[FL Masquerade] Token has been updated for user ${data.user.id}`);
                 currentToken = data.jwt;
@@ -271,7 +270,8 @@ while the extension was active.</strong>
         }
 
         if (event.data.action === "FL_MQ_listProfiles") {
-            activeProfiles = new Map(event.data.profiles);;
+            activeProfiles = new Map(event.data.profiles);
+            console.debug("Profile data was updated.")
         }
     });
 
