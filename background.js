@@ -1,5 +1,6 @@
 const profileStorage = new ProfileStorage();
 const REFRESH_INTERVAL = 60;
+const EXPIRATION_THRESHOLD = 8 * 60 * 60;
 
 function reportProfilesList(tabIds) {
     profileStorage.loadProfiles().then(() => {
@@ -14,6 +15,15 @@ function reportProfilesList(tabIds) {
     });
 }
 
+// Taken from https://stackoverflow.com/a/47115113
+function jwtDecode(t) {
+    let token = {};
+    token.raw = t;
+    token.header = JSON.parse(window.atob(t.split('.')[0]));
+    token.payload = JSON.parse(window.atob(t.split('.')[1]));
+    return (token)
+}
+
 function refreshProfileTokens() {
     profileStorage.loadProfiles().then(() => {
         let profiles = profileStorage.listProfiles();
@@ -22,6 +32,15 @@ function refreshProfileTokens() {
 
         for (let k of profiles.keys()) {
             const profile = profiles.get(k);
+            const tokenInfo = jwtDecode(profile.token);
+            const nowInSecs = Math.round(new Date().getTime() / 1000);
+
+            if (tokenInfo.payload.exp - nowInSecs > EXPIRATION_THRESHOLD) {
+                console.debug(`Skipping ${profile.userId}: too fresh (${tokenInfo.payload.exp - nowInSecs} > ${EXPIRATION_THRESHOLD})`)
+                continue;
+            }
+
+            console.debug(`Queueing ${profile.userId} for token refresh...`);
 
             promises.push(
                 fetch(
