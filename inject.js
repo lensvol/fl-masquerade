@@ -1,6 +1,7 @@
 (function () {
     const DONE = 4;
     const PERSONA_CHANGE_STORYLET_ID = 777_777_777;
+    const ADD_PERSONA_STORYLET_ID = 777_777_776;
     const CHOICE_STORYLET_DESCRIPTION = `
 <strong>Here you can switch to one of your other accounts, provided that you logged into them at least once
 while the extension was active.</strong>
@@ -83,6 +84,11 @@ while the extension was active.</strong>
                     setFakeXhrResponse(this, 200, JSON.stringify(createChoiceStorylet()));
 
                     return this;
+                }
+
+                if (requestData.branchId === ADD_PERSONA_STORYLET_ID) {
+                    localStorage.access_token = "";
+                    location.reload(true);
                 }
 
                 if (requestData.branchId > PERSONA_CHANGE_STORYLET_ID) {
@@ -192,6 +198,24 @@ while the extension was active.</strong>
                 qualityRequirements: [],
             });
         }
+
+        profileBranches.push({
+            name: "Add new persona",
+            description: "<b><i>Choosing this option will take you to the login screen.</i></b>",
+            actionCost: 0,
+            actionLocked: false,
+            challenges: [],
+            currencyCost: 0,
+            currencyLocked: false,
+            id: ADD_PERSONA_STORYLET_ID,
+            image: `conversation`,
+            isLocked: false,
+            ordering: 0,
+            buttonText: "ENTER",
+            planKey: "1234567890abcdefghijklmnopqrstuv",
+            qualityLocked: false,
+            qualityRequirements: [],
+        });
 
         return {
             actions: 0,
