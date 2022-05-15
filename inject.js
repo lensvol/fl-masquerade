@@ -6,6 +6,8 @@
 <strong>Here you can switch to one of your other accounts, provided that you logged into them at least once
 while the extension was active.</strong>
 `;
+    let actionCount = 0;
+    let maxActions = 20;
 
     console.log("[FL Masquerade] Starting injected script.");
 
@@ -93,12 +95,12 @@ while the extension was active.</strong>
 
                 if (requestData.branchId > PERSONA_CHANGE_STORYLET_ID) {
                     const response = {
-                        actions: 0,
+                        actions: actionCount,
                         canChangeOutfit: true,
                         endStorylet: {
                             rootEventId: PERSONA_CHANGE_STORYLET_ID,
                             premiumBenefitsApply: true,
-                            maxActionsAllowed: 20,
+                            maxActionsAllowed: maxActions,
                             isLinkingEvent: false,
                             event: {
                                 isInEventUseTree: false,
@@ -111,7 +113,7 @@ while the extension was active.</strong>
                             image: "masktanned",
                             isDirectLinkingEvent: true,
                             canGoAgain: false,
-                            currentActionsRemaining: 20,
+                            currentActionsRemaining: actionCount,
                         },
                         isSuccess: true,
                         messages: [],
@@ -218,7 +220,7 @@ while the extension was active.</strong>
         });
 
         return {
-            actions: 0,
+            actions: actionCount,
             canChangeOutfit: true,
             isSuccess: true,
             phase: "In",
@@ -250,6 +252,13 @@ while the extension was active.</strong>
             const data = JSON.parse(response.target.responseText);
 
             reportLogin(data.user.id, data.user.name, data.jwt);
+        }
+
+        if (targetUrl.endsWith("/api/character/actions")) {
+            const data = JSON.parse(response.target.responseText);
+
+            actionCount = data.actions;
+            maxActions = data.actionBankSize;
         }
 
         if (targetUrl.endsWith("/api/login/user")) {
