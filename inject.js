@@ -9,6 +9,66 @@ while the extension was active.</strong>
     let actionCount = 0;
     let maxActions = 20;
 
+    class Branch {
+        constructor(branchId, name) {
+            this.branchId = branchId;
+            this.name = name;
+            this._image = "questionsmall";
+            this._description = "";
+            this._actionCost = 0;
+            this._actionLocked = false;
+            this._challenges = [];
+            this._currencyCost = 0;
+            this._currencyLocked = false;
+            this._isLocked = false;
+            this._ordering = 0;
+            this._qualityLocked = false;
+            this._qualityRequirements = [];
+            this._buttonText = "GO";
+            return this;
+        }
+
+        description(text) {
+            this._description = text;
+            return this;
+        }
+
+        isLocked(boolean_value) {
+            this._isLocked = boolean_value;
+            return this;
+        }
+
+        buttonText(text) {
+            this._buttonText = text;
+            return this;
+        }
+
+        image(imageId) {
+            this._image = imageId;
+            return this;
+        }
+
+        build() {
+            return {
+                name: this.name,
+                description: capitalize(this._description),
+                actionCost: this._actionCost,
+                actionLocked: this._actionLocked,
+                challenges: this._challenges,
+                currencyCost: this._currencyCost,
+                currencyLocked: this._currencyLocked,
+                id: this.branchId,
+                image: this._image,
+                isLocked: this._isLocked,
+                ordering: this._ordering,
+                buttonText: this._buttonText,
+                planKey: "1234567890abcdefghijklmnopqrstuv",
+                qualityLocked: this._qualityLocked,
+                qualityRequirements: this._qualityRequirements,
+            }
+        }
+    }
+
     console.log("[FL Masquerade] Starting injected script.");
 
     let activeProfiles = new Map();
@@ -151,23 +211,9 @@ while the extension was active.</strong>
     }
 
     function createBranchPlaceholder() {
-        return {
-            name: "Become Someone Completely Different",
-            description: "Why do we wear faces, again?",
-            actionCost: 0,
-            actionLocked: false,
-            challenges: [],
-            currencyCost: 0,
-            currencyLocked: false,
-            id: PERSONA_CHANGE_STORYLET_ID,
-            image: "maskrose",
-            isLocked: false,
-            ordering: 0,
-            buttonText: "Do it",
-            planKey: "1234567890abcdefghijklmnopqrstuv",
-            qualityLocked: false,
-            qualityRequirements: [],
-        }
+        return new Branch(PERSONA_CHANGE_STORYLET_ID, "Become Someone Completely Different")
+            .image("maskrose")
+            .buttonText("DO IT")
     }
 
     function createChoiceStorylet(profiles) {
@@ -180,44 +226,24 @@ while the extension was active.</strong>
 
             const profile = activeProfiles.get(k);
 
-            const description = (profile.description || "").replace(/(<([^>]+)>)/gi, "");
+            const profileTagline = (profile.description || "").replace(/(<([^>]+)>)/gi, "");
 
-            profileBranches.push({
-                name: profile.name || profile.username,
-                description: capitalize(description) + ".",
-                actionCost: 0,
-                actionLocked: false,
-                challenges: [],
-                currencyCost: 0,
-                currencyLocked: false,
-                id: PERSONA_CHANGE_STORYLET_ID + k,
-                image: `../cameos/${profile.avatar || "dorian"}`,
-                isLocked: false,
-                ordering: 0,
-                buttonText: "Choose",
-                planKey: "1234567890abcdefghijklmnopqrstuv",
-                qualityLocked: false,
-                qualityRequirements: [],
-            });
+            profileBranches.push(
+                new Branch(PERSONA_CHANGE_STORYLET_ID + k, profile.name || profile.username)
+                    .description(profileTagline)
+                    .image(`../cameos/${profile.avatar || "dorian"}`)
+                    .buttonText("DO IT")
+                    .build()
+            )
         }
 
-        profileBranches.push({
-            name: "Add new persona",
-            description: "<b><i>Choosing this option will take you to the login screen.</i></b>",
-            actionCost: 0,
-            actionLocked: false,
-            challenges: [],
-            currencyCost: 0,
-            currencyLocked: false,
-            id: ADD_PERSONA_STORYLET_ID,
-            image: `conversation`,
-            isLocked: false,
-            ordering: 0,
-            buttonText: "ENTER",
-            planKey: "1234567890abcdefghijklmnopqrstuv",
-            qualityLocked: false,
-            qualityRequirements: [],
-        });
+        profileBranches.push(
+            new Branch(ADD_PERSONA_STORYLET_ID, "Add new persona")
+                .description("<b><i>Choosing this option will take you to the login screen.</i></b>")
+                .image("maskrose")
+                .buttonText("ENTER")
+                .build()
+        )
 
         return {
             actions: actionCount,
