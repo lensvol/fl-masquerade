@@ -9,6 +9,91 @@ while the extension was active.</strong>
     let actionCount = 0;
     let maxActions = 20;
 
+    class Storylet {
+        constructor(storyletId, name) {
+            this._category = "";
+            this._name = name;
+            this._image = "questionsmall";
+            this._description = "";
+            this._id = storyletId;
+            this._qualityRequirements = [];
+            this._teaser = "";
+            this._buttonText = "GO";
+            this._branches = [];
+            this._isLocked = false;
+            this._canGoBack = true;
+        }
+
+        category(name) {
+            this._category = name;
+            return this;
+        }
+
+        canGoBack(boolean_value) {
+            this._canGoBack = true;
+        }
+
+        isLocked(boolean_value) {
+            this._isLocked = boolean_value;
+            return this;
+        }
+
+        buttonText(text) {
+            this._buttonText = text;
+            return this;
+        }
+
+        teaser(text) {
+            this._teaser = text;
+            return this;
+        }
+
+        description(text) {
+            this._description = text;
+            return this;
+        }
+
+        image(imageId) {
+            this._image = imageId;
+            return this;
+        }
+
+        addBranch(branch) {
+            this._branches.push(branch)
+            return this;
+        }
+
+        buildEntrypoint() {
+            return {
+                category: this._category,
+                buttonText: this._buttonText,
+                name: this._name,
+                id: this._id,
+                image: this._image,
+                qualityRequirements: this._qualityRequirements,
+                teaser: this._teaser,
+            }
+        }
+
+        build() {
+            return {
+                childBranches: this._branches,
+                description: this._description,
+                distribution: 0,
+                frequency: "Always",
+                id: this._id,
+                image: this._image,
+                isInEventUseTree: false,
+                isLocked: this._isLocked,
+                canGoBack: this._canGoBack,
+                name: this._name,
+                qualityRequirements: [],
+                teaser: this._teaser,
+                urgency: "Normal",
+            }
+        }
+    }
+
     class Branch {
         constructor(branchId, name) {
             this.branchId = branchId;
@@ -199,15 +284,12 @@ while the extension was active.</strong>
     }
 
     function createStoryletPlaceholder() {
-        return {
-            category: "Fancy",
-            buttonText: "Do it",
-            name: "Become Someone Completely Different",
-            id: PERSONA_CHANGE_STORYLET_ID,
-            image: "maskrose",
-            qualityRequirements: [],
-            teaser: "Why do we wear faces, again?"
-        }
+        return new Storylet(PERSONA_CHANGE_STORYLET_ID, "Become Someone Completely Different")
+            .image("maskrose")
+            .buttonText("DO IT")
+            .category("Fancy")
+            .teaser("Why do we wear faces, again?")
+            .build()
     }
 
     function createBranchPlaceholder() {
@@ -245,26 +327,20 @@ while the extension was active.</strong>
                 .build()
         )
 
+        const choiceStorylet = new Storylet(PERSONA_CHANGE_STORYLET_ID, "Become Someone Completely Different")
+            .image("maskrose")
+            .category("Fancy")
+            .description(CHOICE_STORYLET_DESCRIPTION)
+            .teaser("Why do we wear faces, again?");
+
+        profileBranches.map(profile => choiceStorylet.addBranch(profile))
+
         return {
             actions: actionCount,
             canChangeOutfit: true,
             isSuccess: true,
             phase: "In",
-            storylet: {
-                childBranches: profileBranches,
-                description: CHOICE_STORYLET_DESCRIPTION,
-                distribution: 0,
-                frequency: "Always",
-                id: PERSONA_CHANGE_STORYLET_ID,
-                image: "maskrose",
-                isInEventUseTree: false,
-                isLocked: false,
-                canGoBack: true,
-                name: "Become Someone Completely Different",
-                qualityRequirements: [],
-                teaser: "Why do we wear faces, again?",
-                urgency: "Normal",
-            },
+            storylet: choiceStorylet.build()
         }
     }
 
