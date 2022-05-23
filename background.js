@@ -2,16 +2,14 @@ const profileStorage = new ProfileStorage();
 const REFRESH_INTERVAL = 60;
 const EXPIRATION_THRESHOLD = 8 * 60 * 60;
 
-function reportProfilesList(tabIds) {
+function reportProfilesList(tabs) {
     profileStorage.loadProfiles().then(() => {
         const result = {
             action: "FL_MQ_listProfiles",
             // https://stackoverflow.com/questions/55301808/send-a-map-to-content-script
             profiles: [...profileStorage.listProfiles()],
         };
-        for (let tabId of tabIds) {
-            chrome.tabs.sendMessage(tabId, result);
-        }
+        tabs.map((t) => chrome.tabs.sendMessage(t.id, result))
     });
 }
 
@@ -72,9 +70,15 @@ function refreshProfileTokens() {
 
 function getFallenLondonTabs() {
     return new Promise((resolve, reject) => {
-        chrome.tabs.query(
-            {currentWindow: true, url: "*://*.fallenlondon.com/*"},
-            function(tabs) { resolve(tabs); });
+        chrome.windows.getCurrent(w => {
+            chrome.tabs.query(
+                {windowId: w.id, url: "*://*.fallenlondon.com/*"},
+                function (tabs) {
+                    console.log(`Tabs: ${tabs}`);
+                    resolve(tabs);
+                }
+            );
+        });
     });
 }
 
@@ -82,16 +86,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log(request);
     if (request.action === "FL_MQ_LoggedIn") {
         profileStorage.addProfile(request.userId, request.username, request.token);
-        reportProfilesList([sender.tab.id]);
+        reportProfilesList([sender.tab]);
     }
 
     if (request.action === "FL_MQ_augmentInfo") {
         profileStorage.augmentProfile(request.userId, request);
-        reportProfilesList([sender.tab.id]);
+        reportProfilesList([sender.tab]);
     }
 
     if (request.action === "FL_MQ_listProfiles") {
-        reportProfilesList([sender.tab.id]);
+        reportProfilesList([sender.tab]);
     }
 
     if (request.action === "FL_MQ_switchTo") {
