@@ -12,6 +12,14 @@ while the extension was active.</strong>
     let actionCount = 0;
     let maxActions = 20;
 
+    function log(message) {
+        console.error(`[FL Masquerade] ${message}`);
+    }
+
+    function debug(message) {
+        console.debug(`[FL Masquerade] ${message}`);
+    }
+
     class Storylet {
         constructor(storyletId, name) {
             this._category = "";
@@ -64,18 +72,6 @@ while the extension was active.</strong>
         addBranch(branch) {
             this._branches.push(branch)
             return this;
-        }
-
-        buildEntrypoint() {
-            return {
-                category: this._category,
-                buttonText: this._buttonText,
-                name: this._name,
-                id: this._id,
-                image: this._image,
-                qualityRequirements: this._qualityRequirements,
-                teaser: this._teaser,
-            }
         }
 
         build() {
@@ -159,7 +155,63 @@ while the extension was active.</strong>
         }
     }
 
-    console.log("[FL Masquerade] Starting injected script.");
+    function createFinishedChangeResponse() {
+        return  {
+            actions: actionCount,
+            canChangeOutfit: true,
+            endStorylet: {
+                rootEventId: PERSONA_CHANGE_STORYLET_ID,
+                premiumBenefitsApply: true,
+                maxActionsAllowed: maxActions,
+                isLinkingEvent: false,
+                event: {
+                    isInEventUseTree: false,
+                    image: "maskrose",
+                    id: PERSONA_CHANGE_STORYLET_ID + 1,
+                    frequency: "Always",
+                    description: "And now, you wait.",
+                    name: "Why We Wear Faces",
+                },
+                image: "masktanned",
+                isDirectLinkingEvent: true,
+                canGoAgain: false,
+                currentActionsRemaining: actionCount,
+            },
+            isSuccess: true,
+            messages: [],
+            phase: "End",
+        }
+    }
+
+    function createFinishedRedactionResponse() {
+        return {
+            actions: actionCount,
+            canChangeOutfit: true,
+            endStorylet: {
+                rootEventId: PERSONA_REDACTION_STORYLET_ID,
+                premiumBenefitsApply: true,
+                maxActionsAllowed: maxActions,
+                isLinkingEvent: false,
+                event: {
+                    isInEventUseTree: false,
+                    image: "nadirlight",
+                    id: PERSONA_REDACTION_STORYLET_ID + 1,
+                    frequency: "Always",
+                    description: "You forget. You forgot. You will be forgetting... But whom? And why? Yes.",
+                    name: "Irrigo Dreaming",
+                },
+                image: "nadirlight",
+                isDirectLinkingEvent: true,
+                canGoAgain: false,
+                currentActionsRemaining: actionCount,
+            },
+            isSuccess: true,
+            messages: [],
+            phase: "End",
+        }
+    }
+
+    log("Starting injected script.");
 
     let activeProfiles = new Map();
     let currentUserId = -1;
@@ -230,7 +282,7 @@ while the extension was active.</strong>
             if (this._targetUrl.endsWith("/begin")) {
                 const requestData = JSON.parse(arguments[0]);
                 if (requestData.eventId === PERSONA_CHANGE_STORYLET_ID) {
-                    setFakeXhrResponse(this, 200, JSON.stringify(createChoiceStorylet([])));
+                    setFakeXhrResponse(this, 200, JSON.stringify(createChoiceStorylet()));
                     return this;
                 }
             }
@@ -255,72 +307,24 @@ while the extension was active.</strong>
                 }
 
                 if (requestData.branchId > PERSONA_CHANGE_STORYLET_ID && requestData.branchId < PERSONA_REDACTION_STORYLET_ID) {
-                    const response = {
-                        actions: actionCount,
-                        canChangeOutfit: true,
-                        endStorylet: {
-                            rootEventId: PERSONA_CHANGE_STORYLET_ID,
-                            premiumBenefitsApply: true,
-                            maxActionsAllowed: maxActions,
-                            isLinkingEvent: false,
-                            event: {
-                                isInEventUseTree: false,
-                                image: "maskrose",
-                                id: PERSONA_CHANGE_STORYLET_ID + 1,
-                                frequency: "Always",
-                                description: "And now, you wait.",
-                                name: "Why We Wear Faces",
-                            },
-                            image: "masktanned",
-                            isDirectLinkingEvent: true,
-                            canGoAgain: false,
-                            currentActionsRemaining: actionCount,
-                        },
-                        isSuccess: true,
-                        messages: [],
-                        phase: "End",
-                    };
+                    const response = createFinishedChangeResponse();
 
                     setFakeXhrResponse(this, 200, JSON.stringify(response));
 
                     const requestedUserId = requestData.branchId - PERSONA_CHANGE_STORYLET_ID;
-                    console.log(`Switching to ${requestedUserId}...`);
+                    log(`Switching to ${requestedUserId}...`);
                     switchToUser(requestedUserId);
 
                     return this;
                 }
 
                 if (requestData.branchId > PERSONA_REDACTION_STORYLET_ID) {
-                    const response = {
-                        actions: actionCount,
-                        canChangeOutfit: true,
-                        endStorylet: {
-                            rootEventId: PERSONA_REDACTION_STORYLET_ID,
-                            premiumBenefitsApply: true,
-                            maxActionsAllowed: maxActions,
-                            isLinkingEvent: false,
-                            event: {
-                                isInEventUseTree: false,
-                                image: "nadirlight",
-                                id: PERSONA_REDACTION_STORYLET_ID + 1,
-                                frequency: "Always",
-                                description: "You forget. You forgot. You will be forgetting... But whom? And why? Yes.",
-                                name: "Irrigo Dreaming",
-                            },
-                            image: "nadirlight",
-                            isDirectLinkingEvent: true,
-                            canGoAgain: false,
-                            currentActionsRemaining: actionCount,
-                        },
-                        isSuccess: true,
-                        messages: [],
-                        phase: "End",
-                    };
+                    const response = createFinishedRedactionResponse();
 
                     setFakeXhrResponse(this, 200, JSON.stringify(response));
 
                     const requestedUserId = requestData.branchId - PERSONA_REDACTION_STORYLET_ID;
-                    console.log(`Deleting ${requestedUserId}...`);
+                    log(`Deleting ${requestedUserId}...`);
                     removeProfile(requestedUserId);
 
                     return this;
@@ -464,8 +468,10 @@ while the extension was active.</strong>
         if (targetUrl.endsWith("/api/login/user")) {
             const data = JSON.parse(response.target.responseText);
             if (data.jwt !== currentToken) {
-                console.log(`[FL Masquerade] Token has been updated for user ${data.user.id}`);
+                log(`Token has been updated for user ${data.user.id}`);
+
                 currentToken = data.jwt;
+
                 reportUpdatedToken(data.user.id, data.jwt);
             }
         }
@@ -484,14 +490,13 @@ while the extension was active.</strong>
             if (data.phase === "Available") {
                 data.storylets.push(createStoryletPlaceholder())
 
-                Object.defineProperty(this, 'responseText', {writable: true});
-                this.responseText = JSON.stringify(data);
+                setFakeXhrResponse(this, 200, JSON.stringify(data));
             }
 
             if (data.phase === "In" && !data.storylet.canGoBack) {
                 data.storylet.childBranches.push(createBranchPlaceholder());
-                Object.defineProperty(this, 'responseText', {writable: true});
-                this.responseText = JSON.stringify(data);
+
+                setFakeXhrResponse(this, 200, JSON.stringify(data));
             }
         }
     }
@@ -505,11 +510,11 @@ while the extension was active.</strong>
 
         if (event.data.action === "FL_MQ_listProfiles") {
             activeProfiles = new Map(event.data.profiles);
-            console.debug("Profile data was updated.")
+            debug("Profile data was updated.")
         }
     });
 
-    console.debug("[FL Masquerade] Setting up API interceptors.");
+    debug("Setting up API interceptors.");
     XMLHttpRequest.prototype.open = openBypass(XMLHttpRequest.prototype.open);
     XMLHttpRequest.prototype.send = sendBypass(XMLHttpRequest.prototype.send);
 
