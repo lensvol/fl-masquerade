@@ -13,7 +13,7 @@ while the extension was active.</strong>
     let maxActions = 20;
 
     function log(message) {
-        console.error(`[FL Masquerade] ${message}`);
+        console.log(`[FL Masquerade] ${message}`);
     }
 
     function debug(message) {
