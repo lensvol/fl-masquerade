@@ -1,7 +1,10 @@
 (function () {
     const DONE = 4;
-    const PERSONA_CHANGE_STORYLET_ID = 777_777_777;
-    const ADD_PERSONA_STORYLET_ID = 777_777_776;
+
+    const FL_ID_NAMESPACE_START = 778_777_777
+    const ADD_PERSONA_STORYLET_ID = FL_ID_NAMESPACE_START;
+    const PERSONA_CHANGE_STORYLET_ID = ADD_PERSONA_STORYLET_ID + 1;
+    const PERSONA_REDACTION_STORYLET_ID = PERSONA_CHANGE_STORYLET_ID + 10_000_000;
     const CHOICE_STORYLET_DESCRIPTION = `
 <strong>Here you can switch to one of your other accounts, provided that you logged into them at least once
 while the extension was active.</strong>
@@ -77,6 +80,8 @@ while the extension was active.</strong>
 
         build() {
             return {
+                category: this._category,
+                buttonText: this._buttonText,
                 childBranches: this._branches,
                 description: this._description,
                 distribution: 0,
@@ -190,6 +195,11 @@ while the extension was active.</strong>
         window.dispatchEvent(event);
     }
 
+    function removeProfile(userId) {
+        const event = new CustomEvent("FL_MQ_removeProfile", {detail: {userId: userId}})
+        window.dispatchEvent(event);
+    }
+
     function openBypass(original_function) {
         return function (method, url, async) {
             this._targetUrl = url;
@@ -203,9 +213,9 @@ while the extension was active.</strong>
         Object.defineProperty(request, 'readyState', {writable: true});
         Object.defineProperty(request, 'status', {writable: true});
 
-        request.responseText = JSON.stringify(createChoiceStorylet([]));
+        request.responseText = responseText;
         request.readyState = DONE;
-        request.status = 200;
+        request.status = status;
 
         request.onreadystatechange();
     }
@@ -227,18 +237,24 @@ while the extension was active.</strong>
 
             if (this._targetUrl.endsWith("/choosebranch")) {
                 const requestData = JSON.parse(arguments[0]);
+
                 if (requestData.branchId === PERSONA_CHANGE_STORYLET_ID) {
                     setFakeXhrResponse(this, 200, JSON.stringify(createChoiceStorylet()));
+                    return this;
+                }
 
+                if (requestData.branchId === PERSONA_REDACTION_STORYLET_ID) {
+                    setFakeXhrResponse(this, 200, JSON.stringify(createRedactionStorylet()));
                     return this;
                 }
 
                 if (requestData.branchId === ADD_PERSONA_STORYLET_ID) {
                     localStorage.access_token = "";
+                    sessionStorage.access_token = "";
                     location.reload(true);
                 }
 
-                if (requestData.branchId > PERSONA_CHANGE_STORYLET_ID) {
+                if (requestData.branchId > PERSONA_CHANGE_STORYLET_ID && requestData.branchId < PERSONA_REDACTION_STORYLET_ID) {
                     const response = {
                         actions: actionCount,
                         canChangeOutfit: true,
@@ -273,6 +289,42 @@ while the extension was active.</strong>
 
                     return this;
                 }
+
+                if (requestData.branchId > PERSONA_REDACTION_STORYLET_ID) {
+                    const response = {
+                        actions: actionCount,
+                        canChangeOutfit: true,
+                        endStorylet: {
+                            rootEventId: PERSONA_REDACTION_STORYLET_ID,
+                            premiumBenefitsApply: true,
+                            maxActionsAllowed: maxActions,
+                            isLinkingEvent: false,
+                            event: {
+                                isInEventUseTree: false,
+                                image: "nadirlight",
+                                id: PERSONA_REDACTION_STORYLET_ID + 1,
+                                frequency: "Always",
+                                description: "You forget. You forgot. You will be forgetting... But whom? And why? Yes.",
+                                name: "Irrigo Dreaming",
+                            },
+                            image: "nadirlight",
+                            isDirectLinkingEvent: true,
+                            canGoAgain: false,
+                            currentActionsRemaining: actionCount,
+                        },
+                        isSuccess: true,
+                        messages: [],
+                        phase: "End",
+                    };
+
+                    setFakeXhrResponse(this, 200, JSON.stringify(response));
+
+                    const requestedUserId = requestData.branchId - PERSONA_REDACTION_STORYLET_ID;
+                    console.log(`Deleting ${requestedUserId}...`);
+                    removeProfile(requestedUserId);
+
+                    return this;
+                }
             }
 
             return original_function.apply(this, arguments);
@@ -298,7 +350,7 @@ while the extension was active.</strong>
             .buttonText("DO IT")
     }
 
-    function createChoiceStorylet(profiles) {
+    function createChoiceStorylet() {
         const profileBranches = [];
 
         for (let k of activeProfiles.keys()) {
@@ -327,6 +379,14 @@ while the extension was active.</strong>
                 .build()
         )
 
+        profileBranches.push(
+            new Branch(PERSONA_REDACTION_STORYLET_ID, "Forget yourself")
+                .image("nadirlight")
+                .description("<b><i>Choose this to remove one or more personas from the list.</i></b>")
+                .buttonText("REDACT")
+                .build()
+        );
+
         const choiceStorylet = new Storylet(PERSONA_CHANGE_STORYLET_ID, "Become Someone Completely Different")
             .image("maskrose")
             .category("Fancy")
@@ -341,6 +401,44 @@ while the extension was active.</strong>
             isSuccess: true,
             phase: "In",
             storylet: choiceStorylet.build()
+        }
+    }
+
+    function createRedactionStorylet() {
+        const profileBranches = [];
+
+        for (let k of activeProfiles.keys()) {
+            if (k === currentUserId) {
+                continue;
+            }
+
+            const profile = activeProfiles.get(k);
+
+            const profileTagline = (profile.description || "").replace(/(<([^>]+)>)/gi, "");
+
+            profileBranches.push(
+                new Branch(PERSONA_REDACTION_STORYLET_ID + k, `<del>${profile.name || profile.username}</del>`)
+                    .description(`Forget about <b>${profileTagline}</b>...`)
+                    .image(`../cameos/${profile.avatar || "dorian"}`)
+                    .buttonText("CONSENT")
+                    .build()
+            );
+        }
+
+        const redactionStorylet = new Storylet(PERSONA_REDACTION_STORYLET_ID, "Forget yourself")
+            .image("nadirlight")
+            .category("Fancy")
+            .description("...Wait, what?")
+            .teaser("...Wait, what?");
+
+        profileBranches.map(profile => redactionStorylet.addBranch(profile))
+
+        return {
+            actions: actionCount,
+            canChangeOutfit: true,
+            isSuccess: true,
+            phase: "In",
+            storylet: redactionStorylet.build()
         }
     }
 
@@ -401,6 +499,7 @@ while the extension was active.</strong>
     window.addEventListener("message", (event) => {
         if (event.data.action === "FL_MQ_switchTo") {
             localStorage.access_token = event.data.accessToken;
+            sessionStorage.access_token = event.data.accessToken;
             location.reload(true);
         }
 

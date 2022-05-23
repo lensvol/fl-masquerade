@@ -25,6 +25,15 @@ class ProfileStorage {
         return this.profiles.get(userId);
     }
 
+    removeProfile(userId) {
+        if (this.profiles.has(userId)) {
+            this.profiles.delete(userId);
+            chrome.storage.local.remove(`profile_${userId}`);
+            return true;
+        }
+        return false;
+    }
+
     addProfile(userId, username, token) {
         const userRecord = {};
         userRecord[`profile_${userId}`] = {

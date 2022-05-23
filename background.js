@@ -98,6 +98,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         reportProfilesList([sender.tab]);
     }
 
+    if (request.action === "FL_MQ_removeProfile") {
+        const requestedProfile = profileStorage.getProfile(request.userId);
+        if (requestedProfile != null) {
+            console.debug(`[FL Masquerade] Removing profile with ID ${request.userId} from storage...`)
+            profileStorage.removeProfile(requestedProfile.userId);
+        } else {
+            console.debug(`[FL Masquerade] Attempt to remove deleted profile ${request.userId}!`)
+        }
+
+        getFallenLondonTabs().then(tabs => {
+            reportProfilesList(tabs)
+        });
+    }
+
     if (request.action === "FL_MQ_switchTo") {
         const requestedProfile = profileStorage.getProfile(request.userId);
 

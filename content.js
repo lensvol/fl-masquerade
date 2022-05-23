@@ -22,7 +22,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendToPage(message.action, message);
 });
 
-["FL_MQ_LoggedIn", "FL_MQ_switchTo", "FL_MQ_listProfiles", "FL_MQ_augmentInfo"].forEach((eventType) => {
+["FL_MQ_LoggedIn", "FL_MQ_switchTo", "FL_MQ_listProfiles", "FL_MQ_augmentInfo", "FL_MQ_removeProfile"].forEach((eventType) => {
     window.addEventListener(eventType, (event) => {
         chrome.runtime.sendMessage({
             action: eventType,
