@@ -124,6 +124,16 @@ while the extension was active.</strong>
             return this;
         }
 
+        qualityLocked(boolean_value) {
+            this._qualityLocked = boolean_value;
+            return this;
+        }
+
+        qualityRequirement(req) {
+            this._qualityRequirements.push(req);
+            return this;
+        }
+
         buttonText(text) {
             this._buttonText = text;
             return this;
@@ -153,6 +163,23 @@ while the extension was active.</strong>
                 qualityRequirements: this._qualityRequirements,
             }
         }
+    }
+
+    function createLockForRedactionStorylet(isLocked) {
+        return {
+            allowedOn: "Character",
+            category: "Dreams",
+            id: 7_777_777,
+            image: "maskrose",
+            isCost: false,
+            nature: "Thing",
+            qualityId: -1,
+            qualityName: "Personas Galore",
+            status: isLocked ? "Locked" : "Unlocked",
+            tooltip: isLocked ? "To remove any personas you have to add them first." :
+                "You unlocked this by adding at least 1 additional persona.",
+        }
+
     }
 
     function createFinishedChangeResponse() {
@@ -388,6 +415,8 @@ while the extension was active.</strong>
                 .image("nadirlight")
                 .description("<b><i>Choose this to remove one or more personas from the list.</i></b>")
                 .buttonText("REDACT")
+                .qualityRequirement(createLockForRedactionStorylet(activeProfiles.size === 1))
+                .qualityLocked(activeProfiles.size === 1)
                 .build()
         );
 
