@@ -74,7 +74,6 @@ function getFallenLondonTabs() {
             chrome.tabs.query(
                 {windowId: w.id, url: "*://*.fallenlondon.com/*"},
                 function (tabs) {
-                    console.log(`Tabs: ${tabs}`);
                     resolve(tabs);
                 }
             );
@@ -83,7 +82,6 @@ function getFallenLondonTabs() {
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log(request);
     if (request.action === "FL_MQ_LoggedIn") {
         profileStorage.addProfile(request.userId, request.username, request.token);
         reportProfilesList([sender.tab]);
