@@ -11,6 +11,7 @@ while the extension was active.</strong>
 `;
     let actionCount = 0;
     let maxActions = 20;
+    let rememberUser = false;
 
     function log(message) {
         console.log(`[FL Masquerade] ${message}`);
@@ -328,8 +329,7 @@ while the extension was active.</strong>
                 }
 
                 if (requestData.branchId === ADD_PERSONA_STORYLET_ID) {
-                    localStorage.access_token = "";
-                    sessionStorage.access_token = "";
+                    clearAuthToken();
                     location.reload(true);
                 }
 
@@ -530,10 +530,25 @@ while the extension was active.</strong>
         }
     }
 
+    function clearAuthToken() {
+        localStorage.access_token = "";
+        sessionStorage.access_token = "";
+    }
+
+    function setAuthToken(accessToken, remember = false) {
+        if (remember) {
+            localStorage.access_token = accessToken;
+            sessionStorage.access_token = "";
+        } else {
+            localStorage.access_token = "";
+            sessionStorage.access_token = accessToken;
+        }
+    }
+
     window.addEventListener("message", (event) => {
         if (event.data.action === "FL_MQ_switchTo") {
-            localStorage.access_token = event.data.accessToken;
-            sessionStorage.access_token = event.data.accessToken;
+            setAuthToken(event.data.accessToken, rememberUser);
+
             location.reload(true);
         }
 
@@ -550,4 +565,36 @@ while the extension was active.</strong>
     currentToken = localStorage.access_token || sessionStorage.access_token;
 
     requestProfileList();
+
+
+    debug("Setting up DOM mutation observer.")
+    let mainContentObserver = new MutationObserver(((mutations, observer) => {
+        for (let m = 0; m < mutations.length; m++) {
+            const mutation = mutations[m];
+
+            for (let n = 0; n < mutation.addedNodes.length; n++) {
+                const node = mutation.addedNodes[n];
+
+                if (node.nodeName.toLowerCase() === "input") {
+                    log(node);
+                    continue;
+                }
+
+                if (node.nodeName.toLowerCase() !== "div") {
+                    continue;
+                }
+
+                const rememberMeCheckbox = node.querySelector("input[name='rememberMe']");
+                if (rememberMeCheckbox != null) {
+                    debug(`R: ${rememberUser} ${rememberMeCheckbox.checked}`);
+                    rememberUser = rememberMeCheckbox.checked;
+                    rememberMeCheckbox.addEventListener('change', (event) => {
+                        rememberUser = event.currentTarget.checked;
+                        debug(`${rememberUser} ${event.currentTarget.checked}`)
+                    });
+                }
+            }
+        }
+    }));
+    mainContentObserver.observe(document, {childList: true, subtree: true});
 }())
