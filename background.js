@@ -132,4 +132,3 @@ profileStorage.loadProfiles().then(() => {
 });
 
 setInterval(refreshProfileTokens, 1000 * 60 * REFRESH_INTERVAL);
-

@@ -4,7 +4,7 @@
     const FL_ID_NAMESPACE_START = 778_777_777
     const ADD_PERSONA_STORYLET_ID = FL_ID_NAMESPACE_START;
     const PERSONA_CHANGE_STORYLET_ID = ADD_PERSONA_STORYLET_ID + 1;
-    const PERSONA_REDACTION_STORYLET_ID = PERSONA_CHANGE_STORYLET_ID + 10_000_000;
+    const PERSONA_REDACTION_STORYLET_ID = PERSONA_CHANGE_STORYLET_ID + 100;
     const CHOICE_STORYLET_DESCRIPTION = `
 <strong>Here you can switch to one of your other accounts, provided that you logged into them at least once
 while the extension was active.</strong>
@@ -12,6 +12,7 @@ while the extension was active.</strong>
     let actionCount = 0;
     let maxActions = 20;
     let rememberUser = false;
+    let availablePersonas = [];
 
     function log(message) {
         console.log(`[FL Masquerade] ${message}`);
@@ -338,7 +339,9 @@ while the extension was active.</strong>
 
                     setFakeXhrResponse(this, 200, JSON.stringify(response));
 
-                    const requestedUserId = requestData.branchId - PERSONA_CHANGE_STORYLET_ID;
+                    const requestedUserIndex = requestData.branchId - PERSONA_CHANGE_STORYLET_ID - 1;
+                    const requestedUserId = activeProfiles.get(availablePersonas[requestedUserIndex]).userId;
+
                     log(`Switching to ${requestedUserId}...`);
                     switchToUser(requestedUserId);
 
@@ -350,7 +353,8 @@ while the extension was active.</strong>
 
                     setFakeXhrResponse(this, 200, JSON.stringify(response));
 
-                    const requestedUserId = requestData.branchId - PERSONA_REDACTION_STORYLET_ID;
+                    const requestedUserIndex = requestData.branchId - PERSONA_REDACTION_STORYLET_ID - 1;
+                    const requestedUserId = activeProfiles.get(availablePersonas[requestedUserIndex]).userId;
                     log(`Deleting ${requestedUserId}...`);
                     removeProfile(requestedUserId);
 
@@ -384,23 +388,18 @@ while the extension was active.</strong>
     function createChoiceStorylet() {
         const profileBranches = [];
 
-        for (let k of activeProfiles.keys()) {
-            if (k === currentUserId) {
-                continue;
-            }
-
+        availablePersonas.forEach((k, i) => {
             const profile = activeProfiles.get(k);
-
             const profileTagline = (profile.description || "").replace(/(<([^>]+)>)/gi, "");
 
             profileBranches.push(
-                new Branch(PERSONA_CHANGE_STORYLET_ID + k, profile.name || profile.username)
+                new Branch(PERSONA_CHANGE_STORYLET_ID + (i + 1), profile.name || profile.username)
                     .description(profileTagline)
                     .image(`../cameos/${profile.avatar || "dorian"}`)
                     .buttonText("DO IT")
                     .build()
             )
-        }
+        });
 
         profileBranches.push(
             new Branch(ADD_PERSONA_STORYLET_ID, "Add new persona")
@@ -440,23 +439,18 @@ while the extension was active.</strong>
     function createRedactionStorylet() {
         const profileBranches = [];
 
-        for (let k of activeProfiles.keys()) {
-            if (k === currentUserId) {
-                continue;
-            }
-
+        availablePersonas.forEach((k, i) => {
             const profile = activeProfiles.get(k);
-
             const profileTagline = (profile.description || "").replace(/(<([^>]+)>)/gi, "");
 
             profileBranches.push(
-                new Branch(PERSONA_REDACTION_STORYLET_ID + k, `<del>${profile.name || profile.username}</del>`)
+                new Branch(PERSONA_REDACTION_STORYLET_ID + (i + 1), `<del>${profile.name || profile.username}</del>`)
                     .description(`Forget about <b>${profileTagline}</b>...`)
                     .image(`../cameos/${profile.avatar || "dorian"}`)
                     .buttonText("CONSENT")
                     .build()
             );
-        }
+        });
 
         const redactionStorylet = new Storylet(PERSONA_REDACTION_STORYLET_ID, "Forget yourself")
             .image("nadirlight")
@@ -554,6 +548,9 @@ while the extension was active.</strong>
 
         if (event.data.action === "FL_MQ_listProfiles") {
             activeProfiles = new Map(event.data.profiles);
+            availablePersonas = new Array(...activeProfiles.keys()).filter(k => k !== currentUserId);
+            availablePersonas.sort();
+
             debug("Profile data was updated.")
         }
     });
