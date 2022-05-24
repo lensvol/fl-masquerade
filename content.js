@@ -1,4 +1,4 @@
-console.log("[FL Genius Loci] Content script started.");
+console.log("[FL Masquerade] Content script started.");
 
 const s = document.createElement('script');
 s.src = chrome.runtime.getURL('inject.js');

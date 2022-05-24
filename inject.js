@@ -563,7 +563,6 @@ while the extension was active.</strong>
 
     requestProfileList();
 
-
     debug("Setting up DOM mutation observer.")
     let mainContentObserver = new MutationObserver(((mutations, observer) => {
         for (let m = 0; m < mutations.length; m++) {

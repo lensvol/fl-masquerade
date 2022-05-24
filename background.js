@@ -1,3 +1,67 @@
+const PROFILE_PREFIX = "profile_";
+
+class ProfileStorage {
+    constructor() {
+        this.profiles = new Map();
+    }
+
+    loadProfiles() {
+        return new Promise(((resolve, reject) => {
+            chrome.storage.local.get(null, (results) => {
+                for (const key in results) {
+                    if (key.startsWith(PROFILE_PREFIX)) {
+                        const userId = parseInt(key.substring(PROFILE_PREFIX.length).trim());
+                        console.debug(`[FL Masquerade] Loading data for ${userId}`)
+                        this.profiles.set(userId, results[key]);
+                    }
+                }
+
+                resolve(this.profiles);
+            })
+        }))
+    }
+
+    getProfile(userId) {
+        return this.profiles.get(userId);
+    }
+
+    removeProfile(userId) {
+        if (this.profiles.has(userId)) {
+            this.profiles.delete(userId);
+            chrome.storage.local.remove(`profile_${userId}`);
+            return true;
+        }
+        return false;
+    }
+
+    addProfile(userId, username, token) {
+        const userRecord = {};
+        userRecord[`profile_${userId}`] = {
+            userId: userId,
+            username: username,
+            token: token,
+        };
+
+        this.profiles.set(userId, userRecord[`profile_${userId}`]);
+        chrome.storage.local.set(userRecord, () => console.debug(`Added user ${username} (${userId})`));
+    }
+
+    augmentProfile(userId, information) {
+        const userRecord = {};
+        userRecord[`profile_${userId}`] = {
+            ...this.getProfile(userId),
+            ...information,
+        };
+
+        this.profiles.set(userId, userRecord[`profile_${userId}`]);
+        chrome.storage.local.set(userRecord, () => console.debug(`Augmented user ${userId} with `, information));
+    }
+
+    listProfiles() {
+        return this.profiles
+    }
+}
+
 const profileStorage = new ProfileStorage();
 const REFRESH_INTERVAL = 60;
 const EXPIRATION_THRESHOLD = 8 * 60 * 60;
@@ -82,48 +146,50 @@ function getFallenLondonTabs() {
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === "FL_MQ_LoggedIn") {
-        profileStorage.addProfile(request.userId, request.username, request.token);
-        reportProfilesList([sender.tab]);
-    }
-
-    if (request.action === "FL_MQ_augmentInfo") {
-        profileStorage.augmentProfile(request.userId, request);
-        reportProfilesList([sender.tab]);
-    }
-
-    if (request.action === "FL_MQ_listProfiles") {
-        reportProfilesList([sender.tab]);
-    }
-
-    if (request.action === "FL_MQ_removeProfile") {
-        const requestedProfile = profileStorage.getProfile(request.userId);
-        if (requestedProfile != null) {
-            console.debug(`[FL Masquerade] Removing profile with ID ${request.userId} from storage...`)
-            profileStorage.removeProfile(requestedProfile.userId);
-        } else {
-            console.debug(`[FL Masquerade] Attempt to remove deleted profile ${request.userId}!`)
+    profileStorage.loadProfiles().then(() => {
+        if (request.action === "FL_MQ_LoggedIn") {
+            profileStorage.addProfile(request.userId, request.username, request.token);
+            reportProfilesList([sender.tab]);
         }
 
-        getFallenLondonTabs().then(tabs => {
-            reportProfilesList(tabs)
-        });
-    }
+        if (request.action === "FL_MQ_augmentInfo") {
+            profileStorage.augmentProfile(request.userId, request);
+            reportProfilesList([sender.tab]);
+        }
 
-    if (request.action === "FL_MQ_switchTo") {
-        const requestedProfile = profileStorage.getProfile(request.userId);
+        if (request.action === "FL_MQ_listProfiles") {
+            reportProfilesList([sender.tab]);
+        }
 
-        // TODO: Reimplement via getFallenLondonTabs
-        chrome.tabs.query({active: true, currentWindow: true, url: "*://*.fallenlondon.com/*"}, function(tabs) {
-            if(tabs.length === 0) {
-                return;
+        if (request.action === "FL_MQ_removeProfile") {
+            const requestedProfile = profileStorage.getProfile(request.userId);
+            if (requestedProfile != null) {
+                console.debug(`[FL Masquerade] Removing profile with ID ${request.userId} from storage...`)
+                profileStorage.removeProfile(requestedProfile.userId);
+            } else {
+                console.debug(`[FL Masquerade] Attempt to remove deleted profile ${request.userId}!`)
             }
 
-            const activeTabId = tabs[0].id;
-            console.debug(`[FL Masquerade] Switching tab ${activeTabId} to ${requestedProfile.username}`);
-            chrome.tabs.sendMessage(activeTabId, {action: "FL_MQ_switchTo", accessToken: requestedProfile.token});
-        });
-    }
+            getFallenLondonTabs().then(tabs => {
+                reportProfilesList(tabs)
+            });
+        }
+
+        if (request.action === "FL_MQ_switchTo") {
+            const requestedProfile = profileStorage.getProfile(request.userId);
+
+            // TODO: Reimplement via getFallenLondonTabs
+            chrome.tabs.query({active: true, currentWindow: true, url: "*://*.fallenlondon.com/*"}, function (tabs) {
+                if (tabs.length === 0) {
+                    return;
+                }
+
+                const activeTabId = tabs[0].id;
+                console.debug(`[FL Masquerade] Switching tab ${activeTabId} to ${requestedProfile.username}`);
+                chrome.tabs.sendMessage(activeTabId, {action: "FL_MQ_switchTo", accessToken: requestedProfile.token});
+            });
+        }
+    })
 });
 
 profileStorage.loadProfiles().then(() => {
