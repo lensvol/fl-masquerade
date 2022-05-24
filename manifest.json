@@ -28,13 +28,6 @@
     "profile_storage.js",
     "inject.js"
   ],
-  "browser_action": {
-    "default_icon": {
-      "16": "/images/masks-icon-19.png",
-      "38": "/images/masks-icon-38.png"
-    },
-    "default_title": "FL Masquerade"
-  },
   "icons": {
     "16": "/images/masks-icon-16.png",
     "32": "/images/masks-icon-32.png",
