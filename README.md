@@ -1,6 +1,6 @@
 # FL Masquerade
 
-[![License](https://img.shields.io/github/license/lensvol/fl-masquerade)](https://github.com/lensvol/fl-masquerade/blob/master/LICENSE) ![GitHub release (latest by date)](https://img.shields.io/github/v/release/lensvol/fl-masquerade) 
+[![License](https://img.shields.io/github/license/lensvol/fl-masquerade)](https://github.com/lensvol/fl-masquerade/blob/master/LICENSE) ![GitHub release (latest by date)](https://img.shields.io/github/v/release/lensvol/fl-masquerade) [![Chrome Web Store](https://img.shields.io/chrome-web-store/v/njkbfdpmpeoppdmgenflgjfnngnfkhbe)](https://chrome.google.com/webstore/detail/fl-masquerade/njkbfdpmpeoppdmgenflgjfnngnfkhbe) [![Mozilla Add-on](https://img.shields.io/amo/v/fl-masquerade)](https://addons.mozilla.org/en-GB/firefox/addon/fl-masquerade/) 
 
 ![screenshot](https://raw.githubusercontent.com/lensvol/fl-masquerade/master/screenshot.png)
 
