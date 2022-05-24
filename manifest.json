@@ -12,9 +12,7 @@
   },
   "permissions": [
     "tabs",
-    "storage",
-    "declarativeContent",
-    "*://api.fallenlondon.com/*"
+    "storage"
   ],
   "content_scripts": [
     {
