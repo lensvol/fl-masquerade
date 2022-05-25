@@ -40,3 +40,10 @@ Grab it here:
 3. Open **opera:extensions** page.
 4. Enable "Developer Mode" (top right corner).
 6. Click **Load unpacked** and select the folder where you unzipped the file.
+
+### Firefox for Mobile Nightly
+
+1. Log-in into your Firefox account.
+2. Go to the [View My Collections](https://addons.mozilla.org/en-US/firefox/collections/) page.
+3. Create a new collection and add "FL Masquerade" extension to it.
+4. Follow the [instructions from Android Police](https://www.androidpolice.com/2020/09/30/firefox-for-android-brings-back-general-extensions-support-heres-how-to-set-it-up/).
