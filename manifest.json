@@ -2,9 +2,12 @@
   "name": "FL Masquerade",
   "description": "Manage multiple identities in \"Fallen London\" browser game.",
   "version": "1.0.1",
-  "manifest_version": 3,
+  "manifest_version": 2,
   "background": {
-    "service_worker": "background.js"
+    "scripts": [
+      "background.js"
+    ],
+    "persistent": true
   },
   "permissions": [
     "tabs",
@@ -12,20 +15,15 @@
   ],
   "content_scripts": [
     {
-      "matches": ["https://*.fallenlondon.com/*"],
+      "matches": ["https://www.fallenlondon.com/*"],
       "js": ["content.js"],
       "css": [],
       "run_at": "document_start"
     }
   ],
-  "web_accessible_resources": [{
-    "resources": [
-      "inject.js"
-    ],
-    "matches": [
-      "https://*.fallenlondon.com/*"
-    ]
-  }],
+  "web_accessible_resources": [
+    "inject.js"
+  ],
   "icons": {
     "16": "/images/masks-icon-16.png",
     "32": "/images/masks-icon-32.png",
