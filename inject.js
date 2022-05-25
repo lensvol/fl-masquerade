@@ -382,7 +382,9 @@ while the extension was active.</strong>
     function createBranchPlaceholder() {
         return new Branch(PERSONA_CHANGE_STORYLET_ID, "Become Someone Completely Different")
             .image("maskrose")
+            .description("Why do we wear faces, again?")
             .buttonText("DO IT")
+            .build()
     }
 
     function createChoiceStorylet() {
