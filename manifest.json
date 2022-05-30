@@ -11,7 +11,8 @@
   },
   "permissions": [
     "tabs",
-    "storage"
+    "storage",
+    "alarms"
   ],
   "content_scripts": [
     {

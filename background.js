@@ -63,7 +63,7 @@ class ProfileStorage {
 }
 
 const profileStorage = new ProfileStorage();
-const REFRESH_INTERVAL = 60;
+const REFRESH_INTERVAL = 3;
 const EXPIRATION_THRESHOLD = 8 * 60 * 60;
 
 function reportProfilesList(tabs) {
@@ -81,8 +81,8 @@ function reportProfilesList(tabs) {
 function jwtDecode(t) {
     let token = {};
     token.raw = t;
-    token.header = JSON.parse(window.atob(t.split('.')[0]));
-    token.payload = JSON.parse(window.atob(t.split('.')[1]));
+    token.header = JSON.parse(atob(t.split('.')[0]));
+    token.payload = JSON.parse(atob(t.split('.')[1]));
     return (token)
 }
 
@@ -197,4 +197,9 @@ profileStorage.loadProfiles().then(() => {
     refreshProfileTokens();
 });
 
-setInterval(refreshProfileTokens, 1000 * 60 * REFRESH_INTERVAL);
+chrome.alarms.create("flTokenRefreshment", { periodInMinutes: REFRESH_INTERVAL });
+
+chrome.alarms.onAlarm.addListener(() => {
+    console.debug("[FL Masquerade] Starting to refresh FL API tokens...");
+    refreshProfileTokens();
+});
