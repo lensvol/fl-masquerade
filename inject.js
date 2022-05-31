@@ -366,7 +366,7 @@ while the extension was active.</strong>
         for (const branchContainer of branches) {
             const branchId = parseInt(branchContainer.attributes["data-branch-id"].value);
 
-            if (branchId <= PERSONA_CHANGE_STORYLET_ID) {
+            if (branchId < ADD_PERSONA_STORYLET_ID) {
                 continue;
             }
 
@@ -377,7 +377,7 @@ while the extension was active.</strong>
 
             let existingButtons = branchContainer.getElementsByClassName(GLOBE_BTN_CLASS_LIST);
             if (existingButtons.length > 0) {
-                console.debug("Duplicate Wiki buttons found, please tell the developer about it!");
+                console.debug("Duplicate note buttons found, please tell the developer about it!");
                 return;
             }
 
@@ -389,7 +389,10 @@ while the extension was active.</strong>
                 }
             }
 
-            if (branchId === ADD_PERSONA_STORYLET_ID || branchId === PERSONA_REDACTION_STORYLET_ID)  {
+            if (branchId === ADD_PERSONA_STORYLET_ID
+                || branchId === PERSONA_REDACTION_STORYLET_ID
+                || branchId === PERSONA_CHANGE_STORYLET_ID
+            ) {
                 continue;
             }
 
