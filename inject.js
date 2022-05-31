@@ -1,5 +1,8 @@
 (function () {
     const DONE = 4;
+    const EXTENSION_NAME = 'FL Masquerade';
+
+    const GLOBE_BTN_CLASS_LIST = "fa fa-inverse fa-stack-1x fa-pencil";
 
     const FL_ID_NAMESPACE_START = 778_777_777
     const ADD_PERSONA_STORYLET_ID = FL_ID_NAMESPACE_START;
@@ -15,11 +18,11 @@ while the extension was active.</strong>
     let availablePersonas = [];
 
     function log(message) {
-        console.log(`[FL Masquerade] ${message}`);
+        console.log(`[${EXTENSION_NAME}] ${message}`);
     }
 
     function debug(message) {
-        console.debug(`[FL Masquerade] ${message}`);
+        console.debug(`[${EXTENSION_NAME}] ${message}`);
     }
 
     class Storylet {
@@ -252,6 +255,174 @@ while the extension was active.</strong>
         window.dispatchEvent(event);
     }
 
+    function showModalInput(title, imageURL, label, submitButtonText, contents, description, handler) {
+        const containerDiv = document.createElement("div");
+        containerDiv.classList.add("modal-dialog__overlay", "modal--share-dialog__overlay", "modal-dialog__overlay--after-open");
+
+        const dialogDiv = document.createElement("div");
+        dialogDiv.classList.add("modal-dialog", "media--root", "modal-dialog--after-open");
+        dialogDiv.setAttribute("role", "dialog");
+        dialogDiv.setAttribute("aria-modal", "true");
+        dialogDiv.setAttribute("tabindex", "-1");
+
+        const contentsDiv = document.createElement("div");
+        contentsDiv.className = "modal__content";
+
+        const titleHeader = document.createElement("h1");
+        titleHeader.classList.add("heading", "heading--1");
+        titleHeader.textContent = title;
+
+        const labelHeader = document.createElement("p");
+        labelHeader.textContent = label;
+
+        const descriptionText = document.createElement("p");
+        descriptionText.className = "descriptive";
+        descriptionText.textContent = description;
+
+        const mediaDiv = document.createElement("div");
+        mediaDiv.className = "media";
+        const mediaLeftDiv = document.createElement("div");
+        mediaLeftDiv.className = "media__left";
+        const mediaBodyDiv = document.createElement("div");
+        mediaBodyDiv.className = "media__body";
+
+        const imageCardDiv = document.createElement("div");
+        imageCardDiv.classList.add("card", "card--sm");
+        const image = document.createElement("img");
+        image.className = "media__object";
+        image.setAttribute("src", imageURL);
+        image.setAttribute("height", 113);
+        image.setAttribute("width", 97);
+
+        const formElement = document.createElement("form");
+        formElement.setAttribute("action", "#");
+
+        const editField = document.createElement("p");
+        editField.className = "form__group";
+
+        const textInput = document.createElement("input");
+        textInput.setAttribute("name", "textInput");
+        textInput.setAttribute("id", "textInput");
+        textInput.setAttribute("value", contents);
+        textInput.className = "form__control";
+
+        const buttonsDiv = document.createElement("div");
+        buttonsDiv.style.cssText = "text-align: right";
+        const cancelButton = document.createElement("button");
+        cancelButton.classList.add("button", "button--primary");
+        cancelButton.textContent = "Cancel";
+        const submitButton = document.createElement("button");
+        submitButton.classList.add("button", "button--primary");
+        submitButton.textContent = submitButtonText;
+
+        imageCardDiv.appendChild(image);
+
+        mediaLeftDiv.append(imageCardDiv);
+        mediaDiv.appendChild(mediaLeftDiv);
+        mediaDiv.appendChild(mediaBodyDiv);
+
+        editField.appendChild(textInput);
+        formElement.appendChild(editField);
+        formElement.appendChild(descriptionText);
+
+        buttonsDiv.appendChild(cancelButton);
+        buttonsDiv.appendChild(submitButton);
+        formElement.appendChild(buttonsDiv);
+
+        mediaBodyDiv.appendChild(labelHeader);
+        mediaBodyDiv.appendChild(formElement);
+
+        contentsDiv.appendChild(titleHeader);
+        contentsDiv.appendChild(mediaDiv);
+
+        dialogDiv.appendChild(contentsDiv);
+        containerDiv.appendChild(dialogDiv);
+        
+        const modalPortals = document.querySelectorAll("div[class='ReactModalPortal']");
+        if (modalPortals != null) {
+            modalPortals[modalPortals.length - 1].appendChild(containerDiv);
+        }
+
+        submitButton.addEventListener("click", () => {
+           containerDiv.remove();
+           if (handler != null) {
+               handler(textInput.value);
+           }
+        });
+
+        cancelButton.addEventListener("click", () => {
+            containerDiv.remove();
+        });
+    }
+
+    function ensureEditPersonaButtonlet(node) {
+        let branches = null;
+        if (node.hasAttribute("data-branch-id")) {
+            branches = [node];
+        } else {
+            branches = node.querySelectorAll("div[data-branch-id]");
+        }
+
+        for (const branchContainer of branches) {
+            const branchId = parseInt(branchContainer.attributes["data-branch-id"].value);
+
+            if (branchId <= PERSONA_CHANGE_STORYLET_ID) {
+                continue;
+            }
+
+            const branchHeader = branchContainer.querySelector("h2[class*='branch__title'], h2[class*='storylet__heading']");
+            if (!branchHeader) {
+                continue;
+            }
+
+            let existingButtons = branchContainer.getElementsByClassName(GLOBE_BTN_CLASS_LIST);
+            if (existingButtons.length > 0) {
+                console.debug("Duplicate Wiki buttons found, please tell the developer about it!");
+                return;
+            }
+
+            const otherButtons = branchContainer.querySelectorAll("div[class*='buttonlet']");
+            const container = branchHeader.parentElement;
+            if (otherButtons.length > 0) {
+                for (const buttonNode of otherButtons) {
+                    container.removeChild(buttonNode);
+                }
+            }
+
+            if (branchId === ADD_PERSONA_STORYLET_ID || branchId === PERSONA_REDACTION_STORYLET_ID)  {
+                continue;
+            }
+
+            const branchUserIndex = branchId - PERSONA_CHANGE_STORYLET_ID - 1;
+            const userProfile = activeProfiles.get(availablePersonas[branchUserIndex]);
+
+            const editPersonaButton = createButtonlet("pencil", "Make a note on this persona");
+            editPersonaButton.addEventListener("click", () => {
+                showModalInput(
+                    userProfile.name,
+                    `https://images.fallenlondon.com/cameos/${userProfile.avatar}.png`,
+                    "A few words about this persona:",
+                    "Save",
+                    userProfile.note !== undefined ? userProfile.note : "",
+                    "For example: its current Ambition, unique items (e.g. Ha'Pennies), specific purpose " +
+                        "for which it was created.",
+                    (personaNote) => {
+                        debug(`Note for user: ${userProfile.userId}: ${personaNote}`);
+                        updatePersonaNote(userProfile.userId, personaNote);
+                    }
+                );
+            });
+            container.insertBefore(editPersonaButton, container.firstChild);
+        }
+    }
+
+    function updatePersonaNote(userId, note) {
+        const event = new CustomEvent("FL_MQ_augmentInfo", {
+            detail: {userId: userId, note: note}
+        })
+        window.dispatchEvent(event);
+    }
+
     function reportAdditionalInfo(userId, name, description, avatar) {
         const event = new CustomEvent("FL_MQ_augmentInfo", {
             detail: {userId: userId, name: name, description: description, avatar: avatar}
@@ -392,11 +563,12 @@ while the extension was active.</strong>
 
         availablePersonas.forEach((k, i) => {
             const profile = activeProfiles.get(k);
-            const profileTagline = (profile.description || "").replace(/(<([^>]+)>)/gi, "");
+            const profileTagline = (profile.description + "." || "").replace(/(<([^>]+)>)/gi, "");
+            const profileNote = !profile.note ? "" : `<br><b>Note:</b> ${profile.note}`;
 
             profileBranches.push(
                 new Branch(PERSONA_CHANGE_STORYLET_ID + (i + 1), profile.name || profile.username)
-                    .description(profileTagline)
+                    .description(`${profileTagline}${profileNote}`)
                     .image(`../cameos/${profile.avatar || "dorian"}`)
                     .buttonText("DO IT")
                     .build()
@@ -469,6 +641,34 @@ while the extension was active.</strong>
             phase: "In",
             storylet: redactionStorylet.build()
         }
+    }
+
+    function createButtonlet(icon, title) {
+        const containerDiv = document.createElement("div");
+        containerDiv.className = "storylet-root__frequency";
+
+        const buttonlet = document.createElement("button");
+        buttonlet.setAttribute("type", "button");
+        buttonlet.className = "buttonlet-container";
+
+        const outerSpan = document.createElement("span");
+        outerSpan.classList.add("buttonlet", "fa-stack", "fa-lg", "buttonlet-enabled");
+        outerSpan.setAttribute("title", title);
+
+        [
+            ["fa", "fa-circle", "fa-stack-2x"],
+            (GLOBE_BTN_CLASS_LIST + " fa-pencil").split(" "),
+            ["u-visually-hidden"]
+        ].map(classNames => {
+            let span = document.createElement("span");
+            span.classList.add(...classNames);
+            outerSpan.appendChild(span);
+        })
+
+        buttonlet.appendChild(outerSpan);
+        containerDiv.appendChild(buttonlet);
+
+        return containerDiv;
     }
 
     function parseResponse(response) {
@@ -581,6 +781,8 @@ while the extension was active.</strong>
                 if (node.nodeName.toLowerCase() !== "div") {
                     continue;
                 }
+
+                ensureEditPersonaButtonlet(node);
 
                 const rememberMeCheckbox = node.querySelector("input[name='rememberMe']");
                 if (rememberMeCheckbox != null) {
