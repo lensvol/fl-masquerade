@@ -12,7 +12,8 @@
   "permissions": [
     "tabs",
     "storage",
-    "alarms"
+    "alarms",
+    "https://api.fallenlondon.com/*"
   ],
   "content_scripts": [
     {
