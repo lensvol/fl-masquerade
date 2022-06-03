@@ -1,4 +1,6 @@
 const PROFILE_PREFIX = "profile_";
+const REFRESH_INTERVAL = 60;
+const EXPIRATION_THRESHOLD = 8 * 60 * 60;
 
 class ProfileStorage {
     constructor() {
@@ -63,8 +65,6 @@ class ProfileStorage {
 }
 
 const profileStorage = new ProfileStorage();
-const REFRESH_INTERVAL = 3;
-const EXPIRATION_THRESHOLD = 8 * 60 * 60;
 
 function reportProfilesList(tabs) {
     profileStorage.loadProfiles().then(() => {
