@@ -411,12 +411,28 @@ while the extension was active.</strong>
                         "for which it was created.",
                     (personaNote) => {
                         debug(`Note for user: ${userProfile.userId}: ${personaNote}`);
+
+                        const profileTagline = (userProfile.description + "." || "").replace(/(<([^>]+)>)/gi, "");
+                        const profileNote = `<br><b>Note:</b> ${personaNote}`;
+
                         updatePersonaNote(userProfile.userId, personaNote);
+                        updatePersonaBranchDescription(userProfile.userId, capitalize(`${profileTagline}${profileNote}`));
                     }
                 );
             });
             container.insertBefore(editPersonaButton, container.firstChild);
         }
+    }
+
+    function updatePersonaBranchDescription(userId, newDescription) {
+        const personaBranchId = PERSONA_CHANGE_STORYLET_ID + availablePersonas.indexOf(userId) + 1;
+        const personaDescription = document.querySelector(`div[data-branch-id='${personaBranchId}']  > div[class='media__body branch__body'] > div > p`);
+        if (personaDescription == null) {
+            debug(`Cannot find branch with ID ${personaBranchId} (${userId}`);
+            return;
+        }
+
+        personaDescription.innerHTML = newDescription;
     }
 
     function updatePersonaNote(userId, note) {
