@@ -417,6 +417,9 @@ while the extension was active.</strong>
 
                         updatePersonaNote(userProfile.userId, personaNote);
                         updatePersonaBranchDescription(userProfile.userId, capitalize(`${profileTagline}${profileNote}`));
+                        // This will get eventually overwriten by the broadcast from the background script, but
+                        // will have to do for the moment.
+                        userProfile.note = personaNote;
                     }
                 );
             });
