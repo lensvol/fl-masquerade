@@ -413,7 +413,7 @@ while the extension was active.</strong>
                         debug(`Note for user: ${userProfile.userId}: ${personaNote}`);
 
                         const profileTagline = (userProfile.description + "." || "").replace(/(<([^>]+)>)/gi, "");
-                        const profileNote = `<br><b>Note:</b> ${personaNote}`;
+                        const profileNote = !personaNote ? "" : `<br><b>Note:</b> ${personaNote}`;
 
                         updatePersonaNote(userProfile.userId, personaNote);
                         updatePersonaBranchDescription(userProfile.userId, capitalize(`${profileTagline}${profileNote}`));
