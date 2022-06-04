@@ -413,11 +413,10 @@ while the extension was active.</strong>
                         debug(`Note for user: ${userProfile.userId}: ${personaNote}`);
 
                         const profileTagline = (userProfile.description + "." || "").replace(/(<([^>]+)>)/gi, "");
-                        const profileNote = !personaNote ? "" : `<br><b>Note:</b> ${personaNote}`;
 
                         updatePersonaNote(userProfile.userId, personaNote);
-                        updatePersonaBranchDescription(userProfile.userId, capitalize(`${profileTagline}${profileNote}`));
-                        // This will get eventually overwriten by the broadcast from the background script, but
+                        updatePersonaBranchDescription(userProfile.userId, capitalize(profileTagline), personaNote);
+                        // This will get eventually overwritten by the broadcast from the background script, but
                         // will have to do for the moment.
                         userProfile.note = personaNote;
                     }
@@ -427,7 +426,7 @@ while the extension was active.</strong>
         }
     }
 
-    function updatePersonaBranchDescription(userId, newDescription) {
+    function updatePersonaBranchDescription(userId, tagLine, note) {
         const personaBranchId = PERSONA_CHANGE_STORYLET_ID + availablePersonas.indexOf(userId) + 1;
         const personaDescription = document.querySelector(`div[data-branch-id='${personaBranchId}']  > div[class='media__body branch__body'] > div > p`);
         if (personaDescription == null) {
@@ -435,7 +434,23 @@ while the extension was active.</strong>
             return;
         }
 
-        personaDescription.innerHTML = newDescription;
+        while(personaDescription.firstChild) {
+            personaDescription.removeChild(personaDescription.lastChild);
+        }
+
+        const tagLineNode = document.createTextNode(tagLine);
+        personaDescription.appendChild(tagLineNode);
+
+        if (note) {
+            const noteNode = document.createTextNode(note);
+            personaDescription.appendChild(document.createElement("br"));
+
+            const labelNode = document.createElement("b");
+            labelNode.innerText = "Note: ";
+
+            personaDescription.appendChild(labelNode);
+            personaDescription.appendChild(noteNode);
+        }
     }
 
     function updatePersonaNote(userId, note) {
