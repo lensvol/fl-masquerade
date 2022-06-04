@@ -1,7 +1,7 @@
 {
   "name": "FL Masquerade",
   "description": "Manage multiple identities in \"Fallen London\" browser game.",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "manifest_version": 2,
   "background": {
     "scripts": [
