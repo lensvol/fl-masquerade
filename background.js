@@ -1,5 +1,5 @@
 const PROFILE_PREFIX = "profile_";
-const REFRESH_INTERVAL = 60;
+const REFRESH_INTERVAL = 3;
 const EXPIRATION_THRESHOLD = 8 * 60 * 60;
 
 class ProfileStorage {
@@ -13,7 +13,7 @@ class ProfileStorage {
                 for (const key in results) {
                     if (key.startsWith(PROFILE_PREFIX)) {
                         const userId = parseInt(key.substring(PROFILE_PREFIX.length).trim());
-                        console.debug(`[FL Masquerade] Loading data for ${userId}`)
+                        // console.debug(`[FL Masquerade] Loading data for ${userId}`)
                         this.profiles.set(userId, results[key]);
                     }
                 }
@@ -56,7 +56,9 @@ class ProfileStorage {
         };
 
         this.profiles.set(userId, userRecord[`profile_${userId}`]);
-        chrome.storage.local.set(userRecord, () => console.debug(`Augmented user ${userId} with `, information));
+        chrome.storage.local.set(userRecord, () => {
+            console.debug(`Augmented user ${userId} with: ${listObjectFields(information).join(", ")}`);
+        });
     }
 
     listProfiles() {
@@ -65,6 +67,18 @@ class ProfileStorage {
 }
 
 const profileStorage = new ProfileStorage();
+
+function listObjectFields(obj) {
+    const fields = [];
+
+    for (n in obj) {
+        if (obj.hasOwnProperty(n)) {
+            fields.push(n);
+        }
+    }
+
+    return fields;
+}
 
 function reportProfilesList(tabs) {
     profileStorage.loadProfiles().then(() => {
@@ -98,7 +112,7 @@ function refreshProfileTokens() {
             const nowInSecs = Math.round(new Date().getTime() / 1000);
 
             if (tokenInfo.payload.exp - nowInSecs > EXPIRATION_THRESHOLD) {
-                console.debug(`Skipping ${profile.userId}: too fresh (${tokenInfo.payload.exp - nowInSecs} > ${EXPIRATION_THRESHOLD})`)
+                // console.debug(`Skipping ${profile.userId}: too fresh (${tokenInfo.payload.exp - nowInSecs} > ${EXPIRATION_THRESHOLD})`)
                 continue;
             }
 
@@ -122,7 +136,7 @@ function refreshProfileTokens() {
                 for (let json of responses) {
                     // TODO: Error handling
                     let newToken = json.value.jwt;
-                    console.log(`Exchanged token for ${json.value.user.name}: ${newToken}`);
+                    // console.log(`Exchanged token for ${json.value.user.name}: ${newToken}`);
 
                     profileStorage.augmentProfile(json.value.user.id, {token: newToken});
                 }
