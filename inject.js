@@ -811,7 +811,6 @@ while the extension was active.</strong>
                 const node = mutation.addedNodes[n];
 
                 if (node.nodeName.toLowerCase() === "input") {
-                    log(node);
                     continue;
                 }
 
