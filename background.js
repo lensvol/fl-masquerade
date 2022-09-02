@@ -126,19 +126,27 @@ function refreshProfileTokens() {
                         headers: {"Authorization": `Bearer ${profile.token}`}
                     }
                 )
-                .then(response => response.json())
+                    .then(response => {
+                        if (response.status === 401) {
+                            throw new Error(`Token for profile ${profile.userId} was rejected by the server`);
+                        }
+                        return response.json()
+                    })
             );
         }
 
         Promise
             .allSettled(promises)
-            .then((responses) => {
-                for (let json of responses) {
-                    // TODO: Error handling
-                    let newToken = json.value.jwt;
-                    // console.log(`Exchanged token for ${json.value.user.name}: ${newToken}`);
+            .then((results) => {
+                for (const result of results) {
+                    if (result.status === "fulfilled") {
+                        let newToken = json.value.jwt;
+                        console.log(`Exchanged token for ${json.value.user.name}`);
 
-                    profileStorage.augmentProfile(json.value.user.id, {token: newToken});
+                        profileStorage.augmentProfile(json.value.user.id, {token: newToken});
+                    } else {
+                        console.debug(result.reason);
+                    }
                 }
 
                 getFallenLondonTabs().then(tabs => reportProfilesList(tabs));
