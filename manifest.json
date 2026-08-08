@@ -4,16 +4,11 @@
   "version": "1.1.2",
   "manifest_version": 3,
   "background": {
+    "scripts": ["background.js"],
     "service_worker": "background.js"
   },
-  "permissions": [
-    "tabs",
-    "storage",
-    "alarms"
-  ],
-  "host_permissions": [
-    "https://api.fallenlondon.com/*"
-  ],
+  "permissions": ["tabs", "storage", "alarms"],
+  "host_permissions": ["https://api.fallenlondon.com/*"],
   "content_scripts": [
     {
       "matches": ["https://*.fallenlondon.com/*"],
@@ -22,18 +17,24 @@
       "run_at": "document_start"
     }
   ],
-  "web_accessible_resources": [{
-    "resources": [
-      "inject.js"
-    ],
-    "matches": [
-      "https://*.fallenlondon.com/*"
-    ]
-  }],
+  "web_accessible_resources": [
+    {
+      "resources": ["inject.js"],
+      "matches": ["https://*.fallenlondon.com/*"]
+    }
+  ],
   "icons": {
     "16": "/images/masks-icon-16.png",
     "32": "/images/masks-icon-32.png",
     "48": "/images/masks-icon-48.png",
     "128": "/images/masks-icon-128.png"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{9a90763a-b8ee-4af4-8bc8-2e2989ad5e4d}",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
   }
 }
