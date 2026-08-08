@@ -751,15 +751,12 @@ while the extension was active.</strong>
             const data = JSON.parse(response.target.responseText);
             if (data.phase === "Available") {
                 data.storylets.push(createStoryletPlaceholder())
-
-                setFakeXhrResponse(this, 200, JSON.stringify(data));
-            }
-
-            if (data.phase === "In" && !data.storylet.canGoBack) {
+            } else if (data.phase === "In" && !data.storylet.canGoBack) {
                 data.storylet.childBranches.push(createBranchPlaceholder());
-
-                setFakeXhrResponse(this, 200, JSON.stringify(data));
             }
+
+          Object.defineProperty(response.target, "responseText", {writable: true});
+          this.responseText = JSON.stringify(data);
         }
     }
 
