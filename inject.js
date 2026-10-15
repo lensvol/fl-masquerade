@@ -8,6 +8,8 @@
     const ADD_PERSONA_STORYLET_ID = FL_ID_NAMESPACE_START;
     const PERSONA_CHANGE_STORYLET_ID = ADD_PERSONA_STORYLET_ID + 1;
     const PERSONA_REDACTION_STORYLET_ID = PERSONA_CHANGE_STORYLET_ID + 100;
+    const GO_BACK_BRANCH_ID = PERSONA_REDACTION_STORYLET_ID + 1;
+    const PERSONA_CHANGE_BRANCH_ID = PERSONA_REDACTION_STORYLET_ID + 2;
     const CHOICE_STORYLET_DESCRIPTION = `
 <strong>Here you can switch to one of your other accounts, provided that you logged into them at least once
 while the extension was active.</strong>
@@ -25,6 +27,56 @@ while the extension was active.</strong>
         console.debug(`[${EXTENSION_NAME}] ${message}`);
     }
 
+    class BranchResult {
+        constructor(title, description) {
+            this._title = title;
+            this._description = description;
+            this._messages = [];
+            this._actions = 20;
+            this._elapsed = 0;
+            this._setting = {};
+            this._endStorylet = {};
+        }
+
+        totalActions(count) {
+            this._actions = count;
+        }
+
+        elapsedActions(count) {
+            this._elapsed = count;
+        }
+
+        addMessage(messageType, text, image = "question", tooltip = "Here be dragons.") {
+            this._messages.push({
+                type: messageType,
+                message: text,
+                image: image,
+                tooltip: tooltip,
+            })
+        }
+
+        endStorylet(storylet) {
+            this._endStorylet = storylet;
+        }
+
+        setting(info) {
+            this._setting = info;
+        }
+
+        build() {
+            return {
+                canChangeOutfit: true,
+                actions: this._actions,
+                phase: "End",
+                endStorylet: this.endStorylet,
+                messages: this._messages,
+                hasUpdatedCharacter: false,
+                elapsed: this._elapsed,
+                isSuccess: true,
+            };
+        }
+    }
+
     class Storylet {
         constructor(storyletId, name) {
             this._category = "";
@@ -33,11 +85,11 @@ while the extension was active.</strong>
             this._description = "";
             this._id = storyletId;
             this._qualityRequirements = [];
+            this._canGoBack = false;
             this._teaser = "";
             this._buttonText = "GO";
             this._branches = [];
             this._isLocked = false;
-            this._canGoBack = true;
         }
 
         category(name) {
@@ -45,8 +97,9 @@ while the extension was active.</strong>
             return this;
         }
 
-        canGoBack(boolean_value) {
-            this._canGoBack = true;
+        canGoBack(boolean_value = true) {
+            this._canGoBack = boolean_value;
+            return this;
         }
 
         isLocked(boolean_value) {
@@ -77,6 +130,25 @@ while the extension was active.</strong>
         addBranch(branch) {
             this._branches.push(branch)
             return this;
+        }
+
+        buildEndStorylet(isLinkingEvent = false) {
+            return {
+                "endStorylet": {
+                    "rootEventId": this._id,
+                    "event": {
+                        "name": this._name,
+                        "description": this._description,
+                        "isInEventUseTree": false,
+                        "deckType": "Always",
+                        "image": this.image(),
+                        "id": this._id
+                    },
+                    "isLinkingEvent": isLinkingEvent,
+                    "isDirectLinkingEvent": false,
+                    "canGoAgain": false
+                }
+            }
         }
 
         build() {
@@ -247,6 +319,7 @@ while the extension was active.</strong>
 
     let activeProfiles = new Map();
     let currentUserId = -1;
+    let currentStoryletPayload = null;
 
     function reportLogin(userId, username, token) {
         const event = new CustomEvent("FL_MQ_LoggedIn", {
@@ -527,6 +600,11 @@ while the extension was active.</strong>
             if (this._targetUrl.endsWith("/choosebranch")) {
                 const requestData = JSON.parse(arguments[0]);
 
+                if (requestData.branchId === PERSONA_CHANGE_BRANCH_ID) {
+                  setFakeXhrResponse(this, 200, JSON.stringify(createChoiceStorylet(branchMode=true)));
+                  return this;
+                }
+
                 if (requestData.branchId === PERSONA_CHANGE_STORYLET_ID) {
                     setFakeXhrResponse(this, 200, JSON.stringify(createChoiceStorylet()));
                     return this;
@@ -553,6 +631,33 @@ while the extension was active.</strong>
                     log(`Switching to ${requestedUserId}...`);
                     switchToUser(requestedUserId);
 
+                    return this;
+                }
+
+                if (requestData.branchId === GO_BACK_BRANCH_ID) {
+                    response = {
+                        canChangeOutfit: true,
+                        actions: currentStoryletPayload.actions,
+                        phase: "End",
+                        setting: currentStoryletPayload.setting,
+                        endStorylet: {
+                            rootEventId: PERSONA_CHANGE_STORYLET_ID,
+                            event: {
+                                name: "Masquerade! Masquerade!",
+                                description: "Watch out. Beware. Listen. Take care.",
+                                isInEventUseTree: false,
+                                deckType: "Always",
+                                image: "boatman",
+                                id: PERSONA_CHANGE_STORYLET_ID,
+                            }
+                        },
+                        messages: [],
+                        hasUpdatedCharacter: false,
+                        elapsed: 0,
+                        isSuccess: true,
+                    }
+
+                    setFakeXhrResponse(this, 200, JSON.stringify(response));
                     return this;
                 }
 
@@ -588,14 +693,14 @@ while the extension was active.</strong>
     }
 
     function createBranchPlaceholder() {
-        return new Branch(PERSONA_CHANGE_STORYLET_ID, "Become Someone Completely Different")
+        return new Branch(PERSONA_CHANGE_BRANCH_ID, "Become Someone Completely Different")
             .image("maskrose")
             .description("Why do we wear faces, again?")
             .buttonText("DO IT")
             .build()
     }
 
-    function createChoiceStorylet() {
+    function createChoiceStorylet(branchMode = false) {
         const profileBranches = [];
 
         availablePersonas.forEach((k, i) => {
@@ -630,11 +735,25 @@ while the extension was active.</strong>
                 .build()
         );
 
-        const choiceStorylet = new Storylet(PERSONA_CHANGE_STORYLET_ID, "Become Someone Completely Different")
+        if (branchMode) {
+            profileBranches.push(
+                new Branch(GO_BACK_BRANCH_ID, "Be yourself")
+                    .image("boatman")
+                    .description("Face the truth.")
+                    .buttonText("GO BACK")
+                    .build()
+            )
+        }
+
+        let choiceStorylet = new Storylet(PERSONA_CHANGE_STORYLET_ID, "Become Someone Completely Different")
             .image("maskrose")
             .category("Fancy")
             .description(CHOICE_STORYLET_DESCRIPTION)
             .teaser("Why do we wear faces, again?");
+
+        if (!branchMode) {
+            choiceStorylet = choiceStorylet.canGoBack();
+        }
 
         profileBranches.map(profile => choiceStorylet.addBranch(profile))
 
@@ -754,9 +873,10 @@ while the extension was active.</strong>
             } else if (data.phase === "In" && !data.storylet.canGoBack) {
                 data.storylet.childBranches.push(createBranchPlaceholder());
             }
+            currentStoryletPayload = data;
 
-          Object.defineProperty(response.target, "responseText", {writable: true});
-          this.responseText = JSON.stringify(data);
+            Object.defineProperty(response.target, "responseText", {writable: true});
+            this.responseText = JSON.stringify(data);
         }
     }
 
