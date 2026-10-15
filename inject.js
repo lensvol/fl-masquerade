@@ -320,6 +320,7 @@ while the extension was active.</strong>
     let activeProfiles = new Map();
     let currentUserId = -1;
     let currentStoryletPayload = null;
+    let shouldFakeStorylet = false;
 
     function reportLogin(userId, username, token) {
         const event = new CustomEvent("FL_MQ_LoggedIn", {
@@ -597,6 +598,13 @@ while the extension was active.</strong>
                 }
             }
 
+            if (this._targetUrl.endsWith("/storylet") && shouldFakeStorylet) {
+                setFakeXhrResponse(this, 200, JSON.stringify(currentStoryletPayload));
+                shouldFakeStorylet = false;
+
+                return this;
+            }
+
             if (this._targetUrl.endsWith("/choosebranch")) {
                 const requestData = JSON.parse(arguments[0]);
 
@@ -656,6 +664,7 @@ while the extension was active.</strong>
                         elapsed: 0,
                         isSuccess: true,
                     }
+                    shouldFakeStorylet = true;
 
                     setFakeXhrResponse(this, 200, JSON.stringify(response));
                     return this;
