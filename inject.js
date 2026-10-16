@@ -6,10 +6,10 @@
 
     const FL_ID_NAMESPACE_START = 778_777_777
     const ADD_PERSONA_STORYLET_ID = FL_ID_NAMESPACE_START;
-    const PERSONA_CHANGE_STORYLET_ID = ADD_PERSONA_STORYLET_ID + 1;
+    const GO_BACK_BRANCH_ID = ADD_PERSONA_STORYLET_ID + 1;
+    const PERSONA_CHANGE_BRANCH_ID = GO_BACK_BRANCH_ID + 1;
+    const PERSONA_CHANGE_STORYLET_ID = PERSONA_CHANGE_BRANCH_ID + 1;
     const PERSONA_REDACTION_STORYLET_ID = PERSONA_CHANGE_STORYLET_ID + 100;
-    const GO_BACK_BRANCH_ID = PERSONA_REDACTION_STORYLET_ID + 1;
-    const PERSONA_CHANGE_BRANCH_ID = PERSONA_REDACTION_STORYLET_ID + 2;
     const CHOICE_STORYLET_DESCRIPTION = `
 <strong>Here you can switch to one of your other accounts, provided that you logged into them at least once
 while the extension was active.</strong>
