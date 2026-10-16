@@ -612,7 +612,7 @@ while the extension was active.</strong>
                   priority: 2,
                   type: "InfoMessage",
                   tooltip: "Beware?",
-                  image: "appallingsecretsmall",
+                  image: "appallingsecret",
                   message: "Beware.",
                 },
                 {
