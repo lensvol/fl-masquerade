@@ -643,7 +643,7 @@ while the extension was active.</strong>
                 }
 
                 if (requestData.branchId === GO_BACK_BRANCH_ID) {
-                    response = {
+                    const response = {
                         canChangeOutfit: true,
                         actions: currentStoryletPayload.actions,
                         phase: "End",
