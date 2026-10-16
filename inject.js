@@ -583,6 +583,59 @@ while the extension was active.</strong>
         request.onreadystatechange();
     }
 
+    function createGoBackStorylet() {
+        return {
+            canChangeOutfit: currentStoryletPayload.canChangeOutfit || true,
+            actions: currentStoryletPayload.actions,
+            setting: currentStoryletPayload.setting,
+            phase: "End",
+            endStorylet: {
+                rootEventId: PERSONA_CHANGE_STORYLET_ID,
+                event: {
+                    name: "Masquerade? Masquerade...",
+                    description: "Be yourself, sure, why not, it <i>will</i> work out eventually.",
+                    isInEventUseTree: false,
+                    deckType: "Always",
+                    image: "boatman",
+                    id: PERSONA_CHANGE_STORYLET_ID,
+                },
+            },
+            messages: [
+                {
+                  priority: 2,
+                  type: "InfoMessage",
+                  tooltip: "Watch out?",
+                  image: "eye",
+                  message: "Watch out.",
+                },
+                {
+                  priority: 2,
+                  type: "InfoMessage",
+                  tooltip: "Beware?",
+                  image: "appallingsecretsmall",
+                  message: "Beware.",
+                },
+                {
+                  priority: 2,
+                  type: "InfoMessage",
+                  tooltip: "Listen?",
+                  image: "eartree",
+                  message: "Listen.",
+                },
+                {
+                  priority: 2,
+                  type: "InfoMessage",
+                  tooltip: "Take care?",
+                  image: "bloodstain",
+                  message: "Take care.",
+                },
+            ],
+            hasUpdatedCharacter: false,
+            elapsed: 0,
+            isSuccess: true,
+        };
+    }
+
     function sendBypass(original_function) {
         return function (body) {
             if (this._targetUrl.endsWith("/logout")) {
@@ -643,27 +696,7 @@ while the extension was active.</strong>
                 }
 
                 if (requestData.branchId === GO_BACK_BRANCH_ID) {
-                    const response = {
-                        canChangeOutfit: true,
-                        actions: currentStoryletPayload.actions,
-                        phase: "End",
-                        setting: currentStoryletPayload.setting,
-                        endStorylet: {
-                            rootEventId: PERSONA_CHANGE_STORYLET_ID,
-                            event: {
-                                name: "Masquerade! Masquerade!",
-                                description: "Watch out. Beware. Listen. Take care.",
-                                isInEventUseTree: false,
-                                deckType: "Always",
-                                image: "boatman",
-                                id: PERSONA_CHANGE_STORYLET_ID,
-                            }
-                        },
-                        messages: [],
-                        hasUpdatedCharacter: false,
-                        elapsed: 0,
-                        isSuccess: true,
-                    }
+                    const response = createGoBackStorylet();
                     shouldFakeStorylet = true;
 
                     setFakeXhrResponse(this, 200, JSON.stringify(response));
