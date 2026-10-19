@@ -27,54 +27,6 @@ while the extension was active.</strong>
         console.debug(`[${EXTENSION_NAME}] ${message}`);
     }
 
-    class BranchResult {
-        constructor(title, description) {
-            this._title = title;
-            this._description = description;
-            this._messages = [];
-            this._actions = 20;
-            this._elapsed = 0;
-            this._setting = {};
-            this._endStorylet = {};
-        }
-
-        totalActions(count) {
-            this._actions = count;
-        }
-
-        elapsedActions(count) {
-            this._elapsed = count;
-        }
-
-        addMessage(messageType, text, image = "question", tooltip = "Here be dragons.") {
-            this._messages.push({
-                type: messageType,
-                message: text,
-                image: image,
-                tooltip: tooltip,
-            })
-        }
-
-        endStorylet(storylet) {
-            this._endStorylet = storylet;
-        }
-
-        setting(info) {
-            this._setting = info;
-        }
-
-        build() {
-            return {
-                canChangeOutfit: true,
-                actions: this._actions,
-                phase: "End",
-                endStorylet: this.endStorylet,
-                messages: this._messages,
-                hasUpdatedCharacter: false,
-                elapsed: this._elapsed,
-                isSuccess: true,
-            };
-        }
     }
 
     class Storylet {
