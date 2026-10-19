@@ -780,7 +780,8 @@ while the extension was active.</strong>
             .image("nadirlight")
             .category("Fancy")
             .description("...Wait, what?")
-            .teaser("...Wait, what?");
+            .teaser("...Wait, what?")
+            .canGoBack();
 
         profileBranches.map(profile => redactionStorylet.addBranch(profile))
 
