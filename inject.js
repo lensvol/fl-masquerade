@@ -1,9 +1,9 @@
 (function () {
     const DONE = 4;
     const EXTENSION_NAME = "FL Masquerade";
-    
+
     const GLOBE_BTN_CLASS_LIST = "fa fa-inverse fa-stack-1x fa-pencil";
-    
+
     const FL_ID_NAMESPACE_START = 778_777_777;
     const ADD_PERSONA_STORYLET_ID = FL_ID_NAMESPACE_START;
     const GO_BACK_BRANCH_ID = ADD_PERSONA_STORYLET_ID + 1;
@@ -18,15 +18,23 @@ while the extension was active.</strong>
     let maxActions = 20;
     let rememberUser = false;
     let availablePersonas = [];
-    
+
     function log(message) {
         console.log(`[${EXTENSION_NAME}] ${message}`);
     }
-    
+
     function debug(message) {
         console.debug(`[${EXTENSION_NAME}] ${message}`);
     }
-    
+
+    function createMaskToggleButton() {
+        const button = document.createElement("button");
+        button.classList.add("button", "button--primary", "travel-button--infobar");
+        button.innerText = "Don A Mask";
+        return button;
+    }
+    const maskToggleButton = createMaskToggleButton();
+
     class Storylet {
         constructor(storyletId, name) {
             this._category = "";
@@ -41,47 +49,47 @@ while the extension was active.</strong>
             this._branches = [];
             this._isLocked = false;
         }
-        
+
         category(name) {
             this._category = name;
             return this;
         }
-        
+
         canGoBack(boolean_value = true) {
             this._canGoBack = boolean_value;
             return this;
         }
-        
+
         isLocked(boolean_value) {
             this._isLocked = boolean_value;
             return this;
         }
-        
+
         buttonText(text) {
             this._buttonText = text;
             return this;
         }
-        
+
         teaser(text) {
             this._teaser = text;
             return this;
         }
-        
+
         description(text) {
             this._description = text;
             return this;
         }
-        
+
         image(imageId) {
             this._image = imageId;
             return this;
         }
-        
+
         addBranch(branch) {
             this._branches.push(branch);
             return this;
         }
-        
+
         buildEndStorylet(isLinkingEvent = false) {
             return {
                 endStorylet: {
@@ -100,7 +108,7 @@ while the extension was active.</strong>
                 },
             };
         }
-        
+
         build() {
             return {
                 category: this._category,
@@ -121,7 +129,7 @@ while the extension was active.</strong>
             };
         }
     }
-    
+
     class Branch {
         constructor(branchId, name) {
             this.branchId = branchId;
@@ -140,37 +148,37 @@ while the extension was active.</strong>
             this._buttonText = "GO";
             return this;
         }
-        
+
         description(text) {
             this._description = text;
             return this;
         }
-        
+
         isLocked(boolean_value) {
             this._isLocked = boolean_value;
             return this;
         }
-        
+
         qualityLocked(boolean_value) {
             this._qualityLocked = boolean_value;
             return this;
         }
-        
+
         qualityRequirement(req) {
             this._qualityRequirements.push(req);
             return this;
         }
-        
+
         buttonText(text) {
             this._buttonText = text;
             return this;
         }
-        
+
         image(imageId) {
             this._image = imageId;
             return this;
         }
-        
+
         build() {
             return {
                 name: this.name,
@@ -191,7 +199,7 @@ while the extension was active.</strong>
             };
         }
     }
-    
+
     function createLockForRedactionStorylet(isLocked) {
         return {
             allowedOn: "Character",
@@ -208,7 +216,7 @@ while the extension was active.</strong>
                 : "You unlocked this by adding at least 1 additional persona.",
         };
     }
-    
+
     function createFinishedChangeResponse() {
         return {
             actions: actionCount,
@@ -236,7 +244,7 @@ while the extension was active.</strong>
             phase: "End",
         };
     }
-    
+
     function createFinishedRedactionResponse() {
         return {
             actions: actionCount,
@@ -264,21 +272,21 @@ while the extension was active.</strong>
             phase: "End",
         };
     }
-    
+
     log("Starting injected script.");
-    
+
     let activeProfiles = new Map();
     let currentUserId = -1;
     let currentStoryletPayload = null;
     let shouldFakeStorylet = false;
-    
+
     function reportLogin(userId, username, token) {
         const event = new CustomEvent("FL_MQ_LoggedIn", {
             detail: {userId: userId, username: username, token: token},
         });
         window.dispatchEvent(event);
     }
-    
+
     function showModalInput(title, imageURL, label, submitButtonText, contents, description, handler) {
         const containerDiv = document.createElement("div");
         containerDiv.classList.add(
@@ -286,34 +294,34 @@ while the extension was active.</strong>
             "modal--share-dialog__overlay",
             "modal-dialog__overlay--after-open"
         );
-        
+
         const dialogDiv = document.createElement("div");
         dialogDiv.classList.add("modal-dialog", "media--root", "modal-dialog--after-open");
         dialogDiv.setAttribute("role", "dialog");
         dialogDiv.setAttribute("aria-modal", "true");
         dialogDiv.setAttribute("tabindex", "-1");
-        
+
         const contentsDiv = document.createElement("div");
         contentsDiv.className = "modal__content";
-        
+
         const titleHeader = document.createElement("h1");
         titleHeader.classList.add("heading", "heading--1");
         titleHeader.textContent = title;
-        
+
         const labelHeader = document.createElement("p");
         labelHeader.textContent = label;
-        
+
         const descriptionText = document.createElement("p");
         descriptionText.className = "descriptive";
         descriptionText.textContent = description;
-        
+
         const mediaDiv = document.createElement("div");
         mediaDiv.className = "media";
         const mediaLeftDiv = document.createElement("div");
         mediaLeftDiv.className = "media__left";
         const mediaBodyDiv = document.createElement("div");
         mediaBodyDiv.className = "media__body";
-        
+
         const imageCardDiv = document.createElement("div");
         imageCardDiv.classList.add("card", "card--sm");
         const image = document.createElement("img");
@@ -321,19 +329,19 @@ while the extension was active.</strong>
         image.setAttribute("src", imageURL);
         image.setAttribute("height", 113);
         image.setAttribute("width", 97);
-        
+
         const formElement = document.createElement("form");
         formElement.setAttribute("action", "#");
-        
+
         const editField = document.createElement("p");
         editField.className = "form__group";
-        
+
         const textInput = document.createElement("input");
         textInput.setAttribute("name", "textInput");
         textInput.setAttribute("id", "textInput");
         textInput.setAttribute("value", contents);
         textInput.className = "form__control";
-        
+
         const buttonsDiv = document.createElement("div");
         buttonsDiv.style.cssText = "text-align: right";
         const cancelButton = document.createElement("button");
@@ -342,47 +350,47 @@ while the extension was active.</strong>
         const submitButton = document.createElement("button");
         submitButton.classList.add("button", "button--primary");
         submitButton.textContent = submitButtonText;
-        
+
         imageCardDiv.appendChild(image);
-        
+
         mediaLeftDiv.append(imageCardDiv);
         mediaDiv.appendChild(mediaLeftDiv);
         mediaDiv.appendChild(mediaBodyDiv);
-        
+
         editField.appendChild(textInput);
         formElement.appendChild(editField);
         formElement.appendChild(descriptionText);
-        
+
         buttonsDiv.appendChild(cancelButton);
         buttonsDiv.appendChild(submitButton);
         formElement.appendChild(buttonsDiv);
-        
+
         mediaBodyDiv.appendChild(labelHeader);
         mediaBodyDiv.appendChild(formElement);
-        
+
         contentsDiv.appendChild(titleHeader);
         contentsDiv.appendChild(mediaDiv);
-        
+
         dialogDiv.appendChild(contentsDiv);
         containerDiv.appendChild(dialogDiv);
-        
+
         const modalPortals = document.querySelectorAll("div[class='ReactModalPortal']");
         if (modalPortals != null) {
             modalPortals[modalPortals.length - 1].appendChild(containerDiv);
         }
-        
+
         submitButton.addEventListener("click", () => {
             containerDiv.remove();
             if (handler != null) {
                 handler(textInput.value);
             }
         });
-        
+
         cancelButton.addEventListener("click", () => {
             containerDiv.remove();
         });
     }
-    
+
     function ensureEditPersonaButtonlet(node) {
         let branches = null;
         if (node.hasAttribute("data-branch-id")) {
@@ -390,27 +398,27 @@ while the extension was active.</strong>
         } else {
             branches = node.querySelectorAll("div[data-branch-id]");
         }
-        
+
         for (const branchContainer of branches) {
             const branchId = parseInt(branchContainer.attributes["data-branch-id"].value);
-            
+
             if (branchId < ADD_PERSONA_STORYLET_ID) {
                 continue;
             }
-            
+
             const branchHeader = branchContainer.querySelector(
                 "h2[class*='branch__title'], h2[class*='storylet__heading']"
             );
             if (!branchHeader) {
                 continue;
             }
-            
+
             let existingButtons = branchContainer.getElementsByClassName(GLOBE_BTN_CLASS_LIST);
             if (existingButtons.length > 0) {
                 console.debug("Duplicate note buttons found, please tell the developer about it!");
                 return;
             }
-            
+
             const otherButtons = branchContainer.querySelectorAll("div[class*='buttonlet']");
             const container = branchHeader.parentElement;
             if (otherButtons.length > 0) {
@@ -418,7 +426,7 @@ while the extension was active.</strong>
                     container.removeChild(buttonNode);
                 }
             }
-            
+
             if (
                 branchId === ADD_PERSONA_STORYLET_ID ||
                 branchId === PERSONA_REDACTION_STORYLET_ID ||
@@ -426,10 +434,10 @@ while the extension was active.</strong>
             ) {
                 continue;
             }
-            
+
             const branchUserIndex = branchId - PERSONA_CHANGE_STORYLET_ID - 1;
             const userProfile = activeProfiles.get(availablePersonas[branchUserIndex]);
-            
+
             const editPersonaButton = createButtonlet("pencil", "Make a note on this persona");
             editPersonaButton.addEventListener("click", () => {
                 showModalInput(
@@ -439,12 +447,12 @@ while the extension was active.</strong>
                     "Save",
                     userProfile.note !== undefined ? userProfile.note : "",
                     "For example: its current Ambition, unique items (e.g. Ha'Pennies), specific purpose " +
-                    "for which it was created.",
+                        "for which it was created.",
                     (personaNote) => {
                         debug(`Note for user: ${userProfile.userId}: ${personaNote}`);
-                        
+
                         const profileTagline = (userProfile.description + "." || "").replace(/(<([^>]+)>)/gi, "");
-                        
+
                         updatePersonaNote(userProfile.userId, personaNote);
                         updatePersonaBranchDescription(userProfile.userId, capitalize(profileTagline), personaNote);
                         // This will get eventually overwritten by the broadcast from the background script, but
@@ -456,7 +464,7 @@ while the extension was active.</strong>
             container.insertBefore(editPersonaButton, container.firstChild);
         }
     }
-    
+
     function updatePersonaBranchDescription(userId, tagLine, note) {
         const personaBranchId = PERSONA_CHANGE_STORYLET_ID + availablePersonas.indexOf(userId) + 1;
         const personaDescription = document.querySelector(
@@ -466,62 +474,62 @@ while the extension was active.</strong>
             debug(`Cannot find branch with ID ${personaBranchId} (${userId}`);
             return;
         }
-        
+
         while (personaDescription.firstChild) {
             personaDescription.removeChild(personaDescription.lastChild);
         }
-        
+
         const tagLineNode = document.createTextNode(tagLine);
         personaDescription.appendChild(tagLineNode);
-        
+
         if (note) {
             const noteNode = document.createTextNode(note);
             personaDescription.appendChild(document.createElement("br"));
-            
+
             const labelNode = document.createElement("b");
             labelNode.innerText = "Note: ";
-            
+
             personaDescription.appendChild(labelNode);
             personaDescription.appendChild(noteNode);
         }
     }
-    
+
     function updatePersonaNote(userId, note) {
         const event = new CustomEvent("FL_MQ_augmentInfo", {
             detail: {userId: userId, note: note},
         });
         window.dispatchEvent(event);
     }
-    
+
     function reportAdditionalInfo(userId, name, description, avatar) {
         const event = new CustomEvent("FL_MQ_augmentInfo", {
             detail: {userId: userId, name: name, description: description, avatar: avatar},
         });
         window.dispatchEvent(event);
     }
-    
+
     function reportUpdatedToken(userId, newToken) {
         const event = new CustomEvent("FL_MQ_augmentInfo", {
             detail: {userId: userId, token: newToken},
         });
         window.dispatchEvent(event);
     }
-    
+
     function requestProfileList() {
         const event = new CustomEvent("FL_MQ_listProfiles", {});
         window.dispatchEvent(event);
     }
-    
+
     function switchToUser(userId) {
         const event = new CustomEvent("FL_MQ_switchTo", {detail: {userId: userId}});
         window.dispatchEvent(event);
     }
-    
+
     function removeProfile(userId) {
         const event = new CustomEvent("FL_MQ_removeProfile", {detail: {userId: userId}});
         window.dispatchEvent(event);
     }
-    
+
     function openBypass(original_function) {
         return function (method, url, async) {
             this._targetUrl = url;
@@ -529,19 +537,19 @@ while the extension was active.</strong>
             return original_function.apply(this, arguments);
         };
     }
-    
+
     function setFakeXhrResponse(request, status, responseText) {
         Object.defineProperty(request, "responseText", {writable: true});
         Object.defineProperty(request, "readyState", {writable: true});
         Object.defineProperty(request, "status", {writable: true});
-        
+
         request.responseText = responseText;
         request.readyState = DONE;
         request.status = status;
-        
+
         request.onreadystatechange();
     }
-    
+
     function createGoBackStorylet() {
         return {
             canChangeOutfit: currentStoryletPayload.canChangeOutfit || true,
@@ -594,14 +602,14 @@ while the extension was active.</strong>
             isSuccess: true,
         };
     }
-    
+
     function sendBypass(original_function) {
         return function (body) {
             if (this._targetUrl.endsWith("/logout")) {
                 setFakeXhrResponse(this, 200, '{"isSuccess": true}');
                 return this;
             }
-            
+
             if (this._targetUrl.endsWith("/begin")) {
                 const requestData = JSON.parse(arguments[0]);
                 if (requestData.eventId === PERSONA_CHANGE_STORYLET_ID) {
@@ -609,84 +617,84 @@ while the extension was active.</strong>
                     return this;
                 }
             }
-            
+
             if (this._targetUrl.endsWith("/storylet") && shouldFakeStorylet) {
                 setFakeXhrResponse(this, 200, JSON.stringify(currentStoryletPayload));
                 shouldFakeStorylet = false;
-                
+
                 return this;
             }
-            
+
             if (this._targetUrl.endsWith("/choosebranch")) {
                 const requestData = JSON.parse(arguments[0]);
-                
+
                 if (requestData.branchId === PERSONA_CHANGE_BRANCH_ID) {
                     setFakeXhrResponse(this, 200, JSON.stringify(createChoiceStorylet((branchMode = true))));
                     return this;
                 }
-                
+
                 if (requestData.branchId === PERSONA_CHANGE_STORYLET_ID) {
                     setFakeXhrResponse(this, 200, JSON.stringify(createChoiceStorylet()));
                     return this;
                 }
-                
+
                 if (requestData.branchId === PERSONA_REDACTION_STORYLET_ID) {
                     setFakeXhrResponse(this, 200, JSON.stringify(createRedactionStorylet()));
                     return this;
                 }
-                
+
                 if (requestData.branchId === ADD_PERSONA_STORYLET_ID) {
                     clearAuthToken();
                     location.reload(true);
                 }
-                
+
                 if (
                     requestData.branchId > PERSONA_CHANGE_STORYLET_ID &&
                     requestData.branchId < PERSONA_REDACTION_STORYLET_ID
                 ) {
                     const response = createFinishedChangeResponse();
-                    
+
                     setFakeXhrResponse(this, 200, JSON.stringify(response));
-                    
+
                     const requestedUserIndex = requestData.branchId - PERSONA_CHANGE_STORYLET_ID - 1;
                     const requestedUserId = activeProfiles.get(availablePersonas[requestedUserIndex]).userId;
-                    
+
                     log(`Switching to ${requestedUserId}...`);
                     switchToUser(requestedUserId);
-                    
+
                     return this;
                 }
-                
+
                 if (requestData.branchId === GO_BACK_BRANCH_ID) {
                     const response = createGoBackStorylet();
                     shouldFakeStorylet = true;
-                    
+
                     setFakeXhrResponse(this, 200, JSON.stringify(response));
                     return this;
                 }
-                
+
                 if (requestData.branchId > PERSONA_REDACTION_STORYLET_ID) {
                     const response = createFinishedRedactionResponse();
-                    
+
                     setFakeXhrResponse(this, 200, JSON.stringify(response));
-                    
+
                     const requestedUserIndex = requestData.branchId - PERSONA_REDACTION_STORYLET_ID - 1;
                     const requestedUserId = activeProfiles.get(availablePersonas[requestedUserIndex]).userId;
                     log(`Deleting ${requestedUserId}...`);
                     removeProfile(requestedUserId);
-                    
+
                     return this;
                 }
             }
-            
+
             return original_function.apply(this, arguments);
         };
     }
-    
+
     function capitalize(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
     }
-    
+
     function createStoryletPlaceholder() {
         return new Storylet(PERSONA_CHANGE_STORYLET_ID, "Become Someone Completely Different")
             .image("maskrose")
@@ -695,7 +703,7 @@ while the extension was active.</strong>
             .teaser("Why do we wear faces, again?")
             .build();
     }
-    
+
     function createBranchPlaceholder() {
         return new Branch(PERSONA_CHANGE_BRANCH_ID, "Become Someone Completely Different")
             .image("maskrose")
@@ -703,15 +711,15 @@ while the extension was active.</strong>
             .buttonText("DO IT")
             .build();
     }
-    
+
     function createChoiceStorylet(branchMode = false) {
         const profileBranches = [];
-        
+
         availablePersonas.forEach((k, i) => {
             const profile = activeProfiles.get(k);
             const profileTagline = (profile.description + "." || "").replace(/(<([^>]+)>)/gi, "");
             const profileNote = !profile.note ? "" : `<br><b>Note:</b> ${profile.note}`;
-            
+
             profileBranches.push(
                 new Branch(PERSONA_CHANGE_STORYLET_ID + (i + 1), profile.name || profile.username)
                     .description(`${profileTagline}${profileNote}`)
@@ -720,7 +728,7 @@ while the extension was active.</strong>
                     .build()
             );
         });
-        
+
         profileBranches.push(
             new Branch(ADD_PERSONA_STORYLET_ID, "Add new persona")
                 .description("<b><i>Choosing this option will take you to the login screen.</i></b>")
@@ -728,7 +736,7 @@ while the extension was active.</strong>
                 .buttonText("ENTER")
                 .build()
         );
-        
+
         profileBranches.push(
             new Branch(PERSONA_REDACTION_STORYLET_ID, "Forget yourself")
                 .image("nadirlight")
@@ -738,7 +746,7 @@ while the extension was active.</strong>
                 .qualityLocked(activeProfiles.size === 1)
                 .build()
         );
-        
+
         if (branchMode) {
             profileBranches.push(
                 new Branch(GO_BACK_BRANCH_ID, "Be yourself")
@@ -748,19 +756,19 @@ while the extension was active.</strong>
                     .build()
             );
         }
-        
+
         let choiceStorylet = new Storylet(PERSONA_CHANGE_STORYLET_ID, "Become Someone Completely Different")
             .image("maskrose")
             .category("Fancy")
             .description(CHOICE_STORYLET_DESCRIPTION)
             .teaser("Why do we wear faces, again?");
-        
+
         if (!branchMode) {
             choiceStorylet = choiceStorylet.canGoBack();
         }
-        
+
         profileBranches.map((profile) => choiceStorylet.addBranch(profile));
-        
+
         return {
             actions: actionCount,
             canChangeOutfit: true,
@@ -769,14 +777,14 @@ while the extension was active.</strong>
             storylet: choiceStorylet.build(),
         };
     }
-    
+
     function createRedactionStorylet() {
         const profileBranches = [];
-        
+
         availablePersonas.forEach((k, i) => {
             const profile = activeProfiles.get(k);
             const profileTagline = (profile.description || "").replace(/(<([^>]+)>)/gi, "");
-            
+
             profileBranches.push(
                 new Branch(PERSONA_REDACTION_STORYLET_ID + (i + 1), `<del>${profile.name || profile.username}</del>`)
                     .description(`Forget about <b>${profileTagline}</b>...`)
@@ -785,16 +793,16 @@ while the extension was active.</strong>
                     .build()
             );
         });
-        
+
         const redactionStorylet = new Storylet(PERSONA_REDACTION_STORYLET_ID, "Forget yourself")
             .image("nadirlight")
             .category("Fancy")
             .description("...Wait, what?")
             .teaser("...Wait, what?")
             .canGoBack();
-        
+
         profileBranches.map((profile) => redactionStorylet.addBranch(profile));
-        
+
         return {
             actions: actionCount,
             canChangeOutfit: true,
@@ -803,19 +811,19 @@ while the extension was active.</strong>
             storylet: redactionStorylet.build(),
         };
     }
-    
+
     function createButtonlet(icon, title) {
         const containerDiv = document.createElement("div");
         containerDiv.className = "storylet-root__frequency";
-        
+
         const buttonlet = document.createElement("button");
         buttonlet.setAttribute("type", "button");
         buttonlet.className = "buttonlet-container";
-        
+
         const outerSpan = document.createElement("span");
         outerSpan.classList.add("buttonlet", "fa-stack", "fa-lg", "buttonlet-enabled");
         outerSpan.setAttribute("title", title);
-        
+
         [
             ["fa", "fa-circle", "fa-stack-2x"],
             (GLOBE_BTN_CLASS_LIST + " fa-pencil").split(" "),
@@ -825,71 +833,71 @@ while the extension was active.</strong>
             span.classList.add(...classNames);
             outerSpan.appendChild(span);
         });
-        
+
         buttonlet.appendChild(outerSpan);
         containerDiv.appendChild(buttonlet);
-        
+
         return containerDiv;
     }
-    
+
     function parseResponse(response) {
         if (this.readyState !== DONE) {
             return;
         }
-        
+
         let targetUrl = response.currentTarget.responseURL;
         if (targetUrl.endsWith("/api/login")) {
             const data = JSON.parse(response.target.responseText);
-            
+
             reportLogin(data.user.id, data.user.name, data.jwt);
         }
-        
+
         if (targetUrl.endsWith("/api/character/actions")) {
             const data = JSON.parse(response.target.responseText);
-            
+
             actionCount = data.actions;
             maxActions = data.actionBankSize;
         }
-        
+
         if (targetUrl.endsWith("/api/login/user")) {
             const data = JSON.parse(response.target.responseText);
             if (data.jwt !== currentToken) {
                 log(`Token has been updated for user ${data.user.id}`);
-                
+
                 currentToken = data.jwt;
-                
+
                 reportUpdatedToken(data.user.id, data.jwt);
             }
         }
-        
+
         if (targetUrl.endsWith("/api/character/myself")) {
             const data = JSON.parse(response.target.responseText);
             const ch = data.character;
-            
+
             currentUserId = ch.user.id;
-            
+
             reportAdditionalInfo(ch.user.id, ch.name, ch.descriptiveText, ch.avatarImage);
         }
-        
+
         if (targetUrl.endsWith("/api/storylet") || targetUrl.endsWith("/api/storylet/goback")) {
             const data = JSON.parse(response.target.responseText);
             if (data.phase === "Available") {
                 data.storylets.push(createStoryletPlaceholder());
-            } else if (data.phase === "In" && !data.storylet.canGoBack) {
+            } else if (data.phase === "In") {
                 data.storylet.childBranches.push(createBranchPlaceholder());
             }
             currentStoryletPayload = data;
-            
+
             Object.defineProperty(response.target, "responseText", {writable: true});
             this.responseText = JSON.stringify(data);
         }
     }
-    
+
     function clearAuthToken() {
         localStorage.access_token = "";
         sessionStorage.access_token = "";
     }
-    
+
     function setAuthToken(accessToken, remember = false) {
         if (remember) {
             localStorage.access_token = accessToken;
@@ -899,49 +907,119 @@ while the extension was active.</strong>
             sessionStorage.access_token = accessToken;
         }
     }
-    
+
     window.addEventListener("message", (event) => {
         if (event.data.action === "FL_MQ_switchTo") {
             setAuthToken(event.data.accessToken, rememberUser);
-            
+
             location.reload(true);
         }
-        
+
         if (event.data.action === "FL_MQ_listProfiles") {
             activeProfiles = new Map(event.data.profiles);
             availablePersonas = new Array(...activeProfiles.keys()).filter((k) => k !== currentUserId);
             availablePersonas.sort();
-            
+
             debug("Profile data was updated.");
         }
     });
-    
+
     debug("Setting up API interceptors.");
     XMLHttpRequest.prototype.open = openBypass(XMLHttpRequest.prototype.open);
     XMLHttpRequest.prototype.send = sendBypass(XMLHttpRequest.prototype.send);
-    
+
     currentToken = localStorage.access_token || sessionStorage.access_token;
-    
+
     requestProfileList();
-    
+
     debug("Setting up DOM mutation observer.");
     let mainContentObserver = new MutationObserver((mutations, observer) => {
         for (let m = 0; m < mutations.length; m++) {
             const mutation = mutations[m];
-            
-            for (let n = 0; n < mutation.addedNodes.length; n++) {
-                const node = mutation.addedNodes[n];
-                
-                if (node.nodeName.toLowerCase() === "input") {
-                    continue;
-                }
-                
+
+            for (let n = 0; n < mutation.removedNodes.length; n++) {
+                const node = mutation.removedNodes[n];
+
                 if (node.nodeName.toLowerCase() !== "div") {
                     continue;
                 }
-                
+
+                for (const panelStyle of ["storylet", "branch"]) {
+                    let panels = node.getElementsByClassName(panelStyle);
+                    if (panels.length === 0) {
+                        if (node.nodeName.toLowerCase() === "div" && node.classList.contains(panelStyle)) {
+                            panels = [node];
+                        }
+                    }
+
+                    for (const panel of panels) {
+                        if (
+                            panel.nodeName.toLowerCase() === "div" &&
+                            (panel.dataset.branchId === PERSONA_CHANGE_STORYLET_ID.toString() ||
+                                panel.dataset.branchId === PERSONA_CHANGE_BRANCH_ID.toString())
+                        ) {
+                            maskToggleButton.setAttribute("disabled", "true");
+                        }
+                    }
+                }
+            }
+
+            for (let n = 0; n < mutation.addedNodes.length; n++) {
+                const node = mutation.addedNodes[n];
+
+                if (node.nodeName.toLowerCase() !== "div") {
+                    continue;
+                }
+
+                let travelButton = null;
+                const travelButtons = node.getElementsByClassName("travel-button--infobar");
+                for (const candidateBtn of travelButtons) {
+                    if (candidateBtn.innerText === "TRAVEL") {
+                        travelButton = candidateBtn;
+                        break;
+                    }
+                }
+
+                if (travelButton) {
+                    travelButton.parentNode.insertBefore(maskToggleButton, travelButton.nextSibling);
+                    maskToggleButton.onclick = () => {
+                        // TODO: Do something
+                        const changeMaskStorylet = document.querySelector(
+                            `div[data-branch-id="${PERSONA_CHANGE_STORYLET_ID}"], div[data-branch-id="${PERSONA_CHANGE_BRANCH_ID}"]`
+                        );
+                        if (changeMaskStorylet) {
+                            const goButton = changeMaskStorylet.querySelector("button.button--go");
+                            if (goButton) {
+                                goButton.click();
+                            }
+                        } else {
+                            log("Could not find our synthetic storylet :(");
+                        }
+                    };
+                }
+
+                for (const panelStyle of ["storylet", "branch"]) {
+                    let panels = node.getElementsByClassName(panelStyle);
+                    if (panels.length === 0) {
+                        if (node.nodeName.toLowerCase() === "div" && node.classList.contains(panelStyle)) {
+                            panels = [node];
+                        }
+                    }
+
+                    for (const panel of panels) {
+                        if (
+                            panel.nodeName.toLowerCase() === "div" &&
+                            (panel.dataset.branchId === PERSONA_CHANGE_STORYLET_ID.toString() ||
+                                panel.dataset.branchId === PERSONA_CHANGE_BRANCH_ID.toString())
+                        ) {
+                            panel.style = "display: none;";
+                            maskToggleButton.removeAttribute("disabled");
+                        }
+                    }
+                }
+
                 ensureEditPersonaButtonlet(node);
-                
+
                 const rememberMeCheckbox = node.querySelector("input[name='rememberMe']");
                 if (rememberMeCheckbox != null) {
                     debug(`R: ${rememberUser} ${rememberMeCheckbox.checked}`);
