@@ -240,7 +240,36 @@ while the extension was active.</strong>
                 currentActionsRemaining: actionCount,
             },
             isSuccess: true,
-            messages: [],
+            messages: [
+                {
+                    priority: 2,
+                    type: "InfoMessage",
+                    tooltip: "Watch out?",
+                    image: "eye",
+                    message: "Watch out.",
+                },
+                {
+                    priority: 2,
+                    type: "InfoMessage",
+                    tooltip: "Beware?",
+                    image: "appallingsecret",
+                    message: "Beware.",
+                },
+                {
+                    priority: 2,
+                    type: "InfoMessage",
+                    tooltip: "Listen?",
+                    image: "eartree",
+                    message: "Listen.",
+                },
+                {
+                    priority: 2,
+                    type: "InfoMessage",
+                    tooltip: "Take care?",
+                    image: "bloodstain",
+                    message: "Take care.",
+                },
+            ],
             phase: "End",
         };
     }
@@ -563,40 +592,11 @@ while the extension was active.</strong>
                     description: "Be yourself, sure, why not, it <i>will</i> work out eventually.",
                     isInEventUseTree: false,
                     deckType: "Always",
-                    image: "boatman",
+                    image: "handstop",
                     id: PERSONA_CHANGE_STORYLET_ID,
                 },
             },
-            messages: [
-                {
-                    priority: 2,
-                    type: "InfoMessage",
-                    tooltip: "Watch out?",
-                    image: "eye",
-                    message: "Watch out.",
-                },
-                {
-                    priority: 2,
-                    type: "InfoMessage",
-                    tooltip: "Beware?",
-                    image: "appallingsecret",
-                    message: "Beware.",
-                },
-                {
-                    priority: 2,
-                    type: "InfoMessage",
-                    tooltip: "Listen?",
-                    image: "eartree",
-                    message: "Listen.",
-                },
-                {
-                    priority: 2,
-                    type: "InfoMessage",
-                    tooltip: "Take care?",
-                    image: "bloodstain",
-                    message: "Take care.",
-                },
-            ],
+            messages: [],
             hasUpdatedCharacter: false,
             elapsed: 0,
             isSuccess: true,
@@ -749,9 +749,9 @@ while the extension was active.</strong>
 
         if (branchMode) {
             profileBranches.push(
-                new Branch(GO_BACK_BRANCH_ID, "Be yourself")
-                    .image("boatman")
-                    .description("Face the truth.")
+                new Branch(GO_BACK_BRANCH_ID, "You know what? Rain check.")
+                    .image("handstop")
+                    .description("Maybe you're enough as you are.")
                     .buttonText("GO BACK")
                     .build()
             );
