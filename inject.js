@@ -5,7 +5,7 @@
     const GLOBE_BTN_CLASS_LIST = "fa fa-inverse fa-stack-1x fa-pencil";
 
     const FL_ID_NAMESPACE_START = 778_777_777;
-    const ADD_PERSONA_STORYLET_ID = FL_ID_NAMESPACE_START;
+    const ADD_PERSONA_STORYLET_ID = FL_ID_NAMESPACE_START + 1;
     const GO_BACK_BRANCH_ID = ADD_PERSONA_STORYLET_ID + 1;
     const PERSONA_CHANGE_BRANCH_ID = GO_BACK_BRANCH_ID + 1;
     const PERSONA_CHANGE_STORYLET_ID = PERSONA_CHANGE_BRANCH_ID + 1;
@@ -18,6 +18,7 @@ while the extension was active.</strong>
     let maxActions = 20;
     let rememberUser = false;
     let availablePersonas = [];
+    let currentToken = null;
 
     function log(message) {
         console.log(`[${EXTENSION_NAME}] ${message}`);
@@ -46,7 +47,6 @@ while the extension was active.</strong>
             this._image = "questionsmall";
             this._description = "";
             this._id = storyletId;
-            this._qualityRequirements = [];
             this._canGoBack = false;
             this._teaser = "";
             this._buttonText = "GO";
@@ -63,12 +63,7 @@ while the extension was active.</strong>
             this._canGoBack = boolean_value;
             return this;
         }
-
-        isLocked(boolean_value) {
-            this._isLocked = boolean_value;
-            return this;
-        }
-
+        
         buttonText(text) {
             this._buttonText = text;
             return this;
@@ -93,26 +88,7 @@ while the extension was active.</strong>
             this._branches.push(branch);
             return this;
         }
-
-        buildEndStorylet(isLinkingEvent = false) {
-            return {
-                endStorylet: {
-                    rootEventId: this._id,
-                    event: {
-                        name: this._name,
-                        description: this._description,
-                        isInEventUseTree: false,
-                        deckType: "Always",
-                        image: this.image(),
-                        id: this._id,
-                    },
-                    isLinkingEvent: isLinkingEvent,
-                    isDirectLinkingEvent: false,
-                    canGoAgain: false,
-                },
-            };
-        }
-
+        
         build() {
             return {
                 category: this._category,
@@ -155,11 +131,6 @@ while the extension was active.</strong>
 
         description(text) {
             this._description = text;
-            return this;
-        }
-
-        isLocked(boolean_value) {
-            this._isLocked = boolean_value;
             return this;
         }
 
@@ -564,7 +535,7 @@ while the extension was active.</strong>
     }
 
     function openBypass(original_function) {
-        return function (method, url, async) {
+        return function (method, url) {
             this._targetUrl = url;
             this.addEventListener("readystatechange", parseResponse);
             return original_function.apply(this, arguments);
