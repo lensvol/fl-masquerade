@@ -27,6 +27,10 @@ while the extension was active.</strong>
         console.debug(`[${EXTENSION_NAME}] ${message}`);
     }
 
+    function isMobile() {
+        return navigator.userAgent.toLowerCase().includes("mobile");
+    }
+
     function createMaskToggleButton() {
         const button = document.createElement("button");
         button.classList.add("button", "button--primary", "travel-button--infobar");
@@ -971,49 +975,51 @@ while the extension was active.</strong>
                     continue;
                 }
 
-                let travelButton = null;
-                const travelButtons = node.getElementsByClassName("travel-button--infobar");
-                for (const candidateBtn of travelButtons) {
-                    if (candidateBtn.innerText === "TRAVEL") {
-                        travelButton = candidateBtn;
-                        break;
+                if (!isMobile()) {
+                    let travelButton = null;
+                    const travelButtons = node.getElementsByClassName("travel-button--infobar");
+                    for (const candidateBtn of travelButtons) {
+                        if (candidateBtn.innerText === "TRAVEL") {
+                            travelButton = candidateBtn;
+                            break;
+                        }
                     }
-                }
 
-                if (travelButton) {
-                    travelButton.parentNode.insertBefore(maskToggleButton, travelButton.nextSibling);
-                    maskToggleButton.onclick = () => {
-                        // TODO: Do something
-                        const changeMaskStorylet = document.querySelector(
-                            `div[data-branch-id="${PERSONA_CHANGE_STORYLET_ID}"], div[data-branch-id="${PERSONA_CHANGE_BRANCH_ID}"]`
-                        );
-                        if (changeMaskStorylet) {
-                            const goButton = changeMaskStorylet.querySelector("button.button--go");
-                            if (goButton) {
-                                goButton.click();
+                    if (travelButton) {
+                        travelButton.parentNode.insertBefore(maskToggleButton, travelButton.nextSibling);
+                        maskToggleButton.onclick = () => {
+                            // TODO: Do something
+                            const changeMaskStorylet = document.querySelector(
+                                `div[data-branch-id="${PERSONA_CHANGE_STORYLET_ID}"], div[data-branch-id="${PERSONA_CHANGE_BRANCH_ID}"]`
+                            );
+                            if (changeMaskStorylet) {
+                                const goButton = changeMaskStorylet.querySelector("button.button--go");
+                                if (goButton) {
+                                    goButton.click();
+                                }
+                            } else {
+                                log("Could not find our synthetic storylet :(");
                             }
-                        } else {
-                            log("Could not find our synthetic storylet :(");
-                        }
-                    };
-                }
-
-                for (const panelStyle of ["storylet", "branch"]) {
-                    let panels = node.getElementsByClassName(panelStyle);
-                    if (panels.length === 0) {
-                        if (node.nodeName.toLowerCase() === "div" && node.classList.contains(panelStyle)) {
-                            panels = [node];
-                        }
+                        };
                     }
 
-                    for (const panel of panels) {
-                        if (
-                            panel.nodeName.toLowerCase() === "div" &&
-                            (panel.dataset.branchId === PERSONA_CHANGE_STORYLET_ID.toString() ||
-                                panel.dataset.branchId === PERSONA_CHANGE_BRANCH_ID.toString())
-                        ) {
-                            panel.style = "display: none;";
-                            maskToggleButton.removeAttribute("disabled");
+                    for (const panelStyle of ["storylet", "branch"]) {
+                        let panels = node.getElementsByClassName(panelStyle);
+                        if (panels.length === 0) {
+                            if (node.nodeName.toLowerCase() === "div" && node.classList.contains(panelStyle)) {
+                                panels = [node];
+                            }
+                        }
+
+                        for (const panel of panels) {
+                            if (
+                                panel.nodeName.toLowerCase() === "div" &&
+                                (panel.dataset.branchId === PERSONA_CHANGE_STORYLET_ID.toString() ||
+                                    panel.dataset.branchId === PERSONA_CHANGE_BRANCH_ID.toString())
+                            ) {
+                                panel.style = "display: none;";
+                                maskToggleButton.removeAttribute("disabled");
+                            }
                         }
                     }
                 }
