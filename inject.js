@@ -872,6 +872,12 @@ while the extension was active.</strong>
 
                 reportUpdatedToken(data.user.id, data.jwt);
             }
+
+            if (currentUserId === -1) {
+                // It is possible to miss `/myself` response due to how we intercept traffic, but
+                // at least user ID can be discovered in other ways.
+                currentUserId = data.user.id;
+            }
         }
 
         if (targetUrl.endsWith("/api/character/myself")) {
