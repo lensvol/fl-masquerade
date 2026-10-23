@@ -956,7 +956,7 @@ while the extension was active.</strong>
                     let travelButton = null;
                     const travelButtons = node.getElementsByClassName("travel-button--infobar");
                     for (const candidateBtn of travelButtons) {
-                        if (candidateBtn.innerText === "TRAVEL") {
+                        if (["TRAVEL", "VIEW MAP"].includes(candidateBtn.innerText.toUpperCase())) {
                             travelButton = candidateBtn;
                             break;
                         }
