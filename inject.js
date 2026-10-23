@@ -860,7 +860,11 @@ while the extension was active.</strong>
             reportAdditionalInfo(ch.user.id, ch.name, ch.descriptiveText, ch.avatarImage);
         }
 
-        if (targetUrl.endsWith("/api/storylet") || targetUrl.endsWith("/api/storylet/goback")) {
+        if (
+            targetUrl.endsWith("/api/storylet") ||
+            targetUrl.endsWith("/api/storylet/goback") ||
+            targetUrl.endsWith("/api/storylet/begin")
+        ) {
             const data = JSON.parse(response.target.responseText);
             if (data.phase === "Available") {
                 data.storylets.push(createStoryletPlaceholder());
